@@ -13,12 +13,11 @@ class GrupoSeeder extends Seeder
     public function run(): void
     {
         $grupos = [
-            ['codigo' => 'TI-2024-A', 'nombre' => 'Tecnología Informatica 2024-A'],
-            ['codigo' => 'TI-2024-B', 'nombre' => 'Tecnología Informatica 2024-B'],
-            ['codigo' => 'TI-2024-C', 'nombre' => 'Tecnología Informatica 2024-C'],
-            ['codigo' => 'IS-2024-A', 'nombre' => 'Ingeniería de Software 2024-A'],
-            ['codigo' => 'IS-2024-B', 'nombre' => 'Ingeniería de Software 2024-B'],
-            ['codigo' => 'BD-2024-A', 'nombre' => 'Bases de Datos 2024-A'],
+            ['codigo' => 'NW', 'nombre' => 'NW', 'descripcion' => 'Grupo NW', 'cantidad_estudiantes' => 30, 'estado' => 'activo'],
+            ['codigo' => 'SF', 'nombre' => 'SF', 'descripcion' => 'Grupo SF', 'cantidad_estudiantes' => 28, 'estado' => 'activo'],
+            ['codigo' => 'SA', 'nombre' => 'SA', 'descripcion' => 'Grupo SA', 'cantidad_estudiantes' => 32, 'estado' => 'activo'],
+            ['codigo' => 'SC', 'nombre' => 'SC', 'descripcion' => 'Grupo SC', 'cantidad_estudiantes' => 29, 'estado' => 'activo'],
+            ['codigo' => 'NA', 'nombre' => 'NA', 'descripcion' => 'Grupo NA', 'cantidad_estudiantes' => 31, 'estado' => 'activo'],
         ];
 
         foreach ($grupos as $grupo) {

@@ -19,9 +19,8 @@ class GrupoMateriaSeeder extends Seeder
         $horarios = Horario::all();
 
         foreach ($grupos as $grupo) {
-            // Asignar 3-4 materias por grupo
-            $materiasAsignadas = $materias->random(rand(3, 4));
-            foreach ($materiasAsignadas as $materia) {
+            // Asignar todas las materias a cada grupo
+            foreach ($materias as $materia) {
                 $horario = $horarios->random();
                 $grupo->materias()->attach($materia->id, ['horario_id' => $horario->id]);
             }
