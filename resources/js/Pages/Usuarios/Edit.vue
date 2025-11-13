@@ -113,7 +113,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
-defineProps({
+const props = defineProps({
   usuario: Object,
   roles: Array,
 });
@@ -130,15 +130,17 @@ const form = useForm({
 
 // Llenar el formulario con datos del usuario
 form.defaults({
-  nombre: usuario.nombre,
-  apellido: usuario.apellido,
-  email: usuario.email,
-  rol_id: usuario.rol_id,
-  estado: usuario.estado,
+  nombre: props.usuario.nombre,
+  apellido: props.usuario.apellido,
+  email: props.usuario.email,
+  rol_id: props.usuario.rol_id,
+  estado: props.usuario.estado,
 });
 
+form.reset();
+
 const submit = () => {
-  form.put(`/usuarios/${usuario.id}`);
+  form.put(`/usuarios/${props.usuario.id}`);
 };
 </script>
 
