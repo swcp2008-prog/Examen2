@@ -44,8 +44,8 @@ ssh -i tu-clave.pem ec2-user@TU-IP-EC2
 
 ### Paso 3: Descargar y Ejecutar Script
 ```bash
-# Opción A: Descargar desde GitHub
-wget https://github.com/jacintoperez072-cyber/Examen2/raw/master/deploy.sh
+# Opción A: Descargar desde GitHub (recomendado)
+wget https://raw.githubusercontent.com/jacintoperez072-cyber/Examen2/master/deploy.sh
 chmod +x deploy.sh
 
 # Opción B: Crear archivo localmente y copiar via SCP
