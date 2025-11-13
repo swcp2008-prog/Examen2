@@ -13,8 +13,8 @@
               </Link>
             </div>
 
-            <div v-if="$page.props.flash.success" class="mb-4 p-4 bg-green-100 text-green-700 rounded">
-              {{ $page.props.flash.success }}
+            <div v-if="$page.props.flash?.success" class="mb-4 p-4 bg-green-100 text-green-700 rounded">
+              {{ $page.props.flash?.success }}
             </div>
 
             <table class="min-w-full bg-white border border-gray-300">

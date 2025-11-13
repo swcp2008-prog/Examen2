@@ -44,6 +44,18 @@ class DocenteController extends Controller
             return back()->withErrors(['error' => 'Este grupo-materia ya está asignado al docente']);
         }
 
+        // Obtener el grupo-materia con su horario
+        $grupoMateria = GrupoMateria::with('horario')->find($validated['grupo_materia_id']);
+        
+        // Verificar conflicto de horarios si existe horario asignado
+        if ($grupoMateria->horario_id) {
+            $conflicto = $docente->verificarConflictoHorario($grupoMateria->horario_id);
+            
+            if ($conflicto) {
+                return back()->withErrors(['error' => $conflicto['mensaje']]);
+            }
+        }
+
         $docente->grupoMaterias()->attach($validated['grupo_materia_id']);
 
         BitacoraService::registrar('ASIGNAR', 'docente_grupo_materias', $docente->id, 'Grupo-Materia asignado a docente');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Horario;
 use App\Models\Aula;
+use App\Models\Docente;
 use App\Services\BitacoraService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -108,5 +109,30 @@ class HorarioController extends Controller
         })->get();
 
         return response()->json($horarios);
+    }
+
+    public function verificarDisponibilidad(Request $request)
+    {
+        $request->validate([
+            'docente_id' => 'required|exists:docentes,id',
+            'horario_id' => 'required|exists:horarios,id',
+        ]);
+
+        $docente = \App\Models\Docente::find($request->input('docente_id'));
+        $horarioId = $request->input('horario_id');
+
+        $conflicto = $docente->verificarConflictoHorario($horarioId);
+
+        if ($conflicto) {
+            return response()->json([
+                'disponible' => false,
+                'mensaje' => $conflicto['mensaje'],
+            ], 422);
+        }
+
+        return response()->json([
+            'disponible' => true,
+            'mensaje' => 'Horario disponible para este docente',
+        ]);
     }
 }

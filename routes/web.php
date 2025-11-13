@@ -55,6 +55,7 @@ Route::middleware([
     // Rutas de Horarios
     Route::resource('horarios', HorarioController::class);
     Route::get('/horarios/semanales', [HorarioController::class, 'semanales'])->name('horarios.semanales');
+    Route::post('/horarios/verificar-disponibilidad', [HorarioController::class, 'verificarDisponibilidad'])->name('horarios.verificar-disponibilidad');
 
     // Rutas de Materias
     Route::resource('materias', MateriaController::class);

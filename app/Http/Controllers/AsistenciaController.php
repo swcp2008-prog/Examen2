@@ -16,7 +16,7 @@ class AsistenciaController extends Controller
     {
         $this->authorize('view', 'asistencia');
         
-        $asistencias = Asistencia::with(['grupoMateria', 'docente'])
+        $asistencias = Asistencia::with(['grupoMateria.grupo', 'docente.user'])
             ->latest()
             ->paginate(20);
 
@@ -123,7 +123,7 @@ class AsistenciaController extends Controller
             $query->whereBetween('fecha', [$fechaInicio, $fechaFin]);
         }
 
-        $asistencias = $query->with(['grupoMateria', 'docente'])
+        $asistencias = $query->with(['grupoMateria.grupo', 'docente.user'])
             ->get()
             ->groupBy('fecha');
 
@@ -155,7 +155,7 @@ class AsistenciaController extends Controller
             $query->whereBetween('fecha', [$fechaInicio, $fechaFin]);
         }
 
-        $asistencias = $query->with(['grupoMateria', 'docente'])->get();
+        $asistencias = $query->with(['grupoMateria.grupo', 'grupoMateria.materia', 'docente.user'])->get();
 
         $csv = "Fecha,Docente,Grupo,Materia,Estado,Observaciones\n";
         foreach ($asistencias as $asistencia) {

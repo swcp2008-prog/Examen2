@@ -90,6 +90,19 @@ class GrupoMateriaController extends Controller
             'horario_id' => 'required|exists:horarios,id',
         ]);
 
+        // Si el horario cambió, verificar conflictos con docentes asignados
+        if ($grupoMateria->horario_id !== $validated['horario_id']) {
+            $docentes = $grupoMateria->docentes()->get();
+            
+            foreach ($docentes as $docente) {
+                $conflicto = $docente->verificarConflictoHorario($validated['horario_id'], $grupoMateria->id);
+                
+                if ($conflicto) {
+                    return back()->withErrors(['error' => "No se puede cambiar el horario: {$conflicto['mensaje']}"]);
+                }
+            }
+        }
+
         $grupoMateria->update($validated);
 
         BitacoraService::registrar('ACTUALIZAR', 'grupo_materias', $grupoMateria->id, 'GrupoMateria actualizado');
