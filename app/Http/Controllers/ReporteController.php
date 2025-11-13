@@ -186,14 +186,14 @@ class ReporteController extends Controller
         if ($docenteId) {
             $horarios = Docente::find($docenteId)
                 ->grupoMaterias()
-                ->with('horario')
+                ->with('horario.aula')
                 ->get()
                 ->pluck('horario')
                 ->groupBy('dia_semana');
         } elseif ($grupoId) {
             $horarios = \App\Models\Grupo::find($grupoId)
                 ->grupoMaterias()
-                ->with('horario')
+                ->with('horario.aula')
                 ->get()
                 ->pluck('horario')
                 ->groupBy('dia_semana');
