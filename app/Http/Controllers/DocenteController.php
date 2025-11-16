@@ -18,7 +18,8 @@ class DocenteController extends Controller
         $docentes = Docente::with('user', 'grupoMaterias')
             ->paginate(15);
 
-        $gruposMaterias = GrupoMateria::with('grupo', 'materia', 'horario')
+        // Cargar grupo-materias con información de horario (incluye aula) y docentes asignados
+        $gruposMaterias = GrupoMateria::with(['grupo', 'materia', 'horario.aula', 'docentes.user'])
             ->get();
 
         return Inertia::render('Docentes/Index', [
@@ -34,19 +35,25 @@ class DocenteController extends Controller
         $validated = $request->validate([
             'grupo_materia_id' => 'required|exists:grupo_materias,id',
         ]);
+        // Obtener el grupo-materia con horario y docentes asignados
+        $grupoMateria = GrupoMateria::with('horario.aula', 'docentes.user')->find($validated['grupo_materia_id']);
 
-        // Verificar que no esté ya asignado
+        // Verificar si ya está asignado a este mismo docente
         $existe = $docente->grupoMaterias()
             ->where('grupo_materia_id', $validated['grupo_materia_id'])
             ->exists();
 
         if ($existe) {
-            return back()->withErrors(['error' => 'Este grupo-materia ya está asignado al docente']);
+            return back()->withErrors(['error' => 'Este grupo-materia ya está asignado a este docente']);
         }
 
-        // Obtener el grupo-materia con su horario
-        $grupoMateria = GrupoMateria::with('horario')->find($validated['grupo_materia_id']);
-        
+        // Verificar si ya está asignado a otro docente (no permitimos más de un docente por Grupo-Materia)
+        if ($grupoMateria->docentes->isNotEmpty()) {
+            // tomar el primer docente asignado para mensaje
+            $otro = $grupoMateria->docentes->first();
+            return back()->withErrors(['error' => 'Este Grupo-Materia ya está asignado al/la docente: ' . ($otro->user->nombre ?? 'N/A') . ' ' . ($otro->user->apellido ?? '')]);
+        }
+
         // Verificar conflicto de horarios si existe horario asignado
         if ($grupoMateria->horario_id) {
             $conflicto = $docente->verificarConflictoHorario($grupoMateria->horario_id);

@@ -89,16 +89,42 @@
                       📚 Asignar Grupo-Materia a {{ docenteSeleccionado?.user?.nombre }}
                     </h3>
                     <div class="mt-4">
-                      <!-- Selector de Grupo-Materia -->
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Selecciona el Grupo-Materia:
-                      </label>
-                      <select v-model="formulario.grupo_materia_id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">-- Selecciona --</option>
-                        <option v-for="gm in gruposMaterias" :key="gm.id" :value="gm.id">
-                          {{ gm.grupo.nombre }} - {{ gm.materia.nombre }} ({{ gm.horario.hora_inicio }} - {{ gm.horario.hora_fin }})
-                        </option>
-                      </select>
+                      <!-- Tabla de Grupo-Materia con disponibilidad -->
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead class="bg-gray-50">
+                            <tr>
+                              <th class="px-3 py-2 text-left font-medium text-gray-600">Grupo</th>
+                              <th class="px-3 py-2 text-left font-medium text-gray-600">Materia</th>
+                              <th class="px-3 py-2 text-left font-medium text-gray-600">Día</th>
+                              <th class="px-3 py-2 text-left font-medium text-gray-600">Hora</th>
+                              <th class="px-3 py-2 text-left font-medium text-gray-600">Aula</th>
+                              <th class="px-3 py-2 text-left font-medium text-gray-600">Estado</th>
+                              <th class="px-3 py-2 text-center font-medium text-gray-600">Acción</th>
+                            </tr>
+                          </thead>
+                          <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="gm in gruposMaterias" :key="gm.id" class="hover:bg-gray-50">
+                              <td class="px-3 py-2">{{ gm.grupo?.nombre || '—' }}</td>
+                              <td class="px-3 py-2">{{ gm.materia?.nombre || '—' }}</td>
+                              <td class="px-3 py-2">{{ gm.horario?.dia_semana || '—' }}</td>
+                              <td class="px-3 py-2">{{ gm.horario ? gm.horario.hora_inicio + ' - ' + gm.horario.hora_fin : '—' }}</td>
+                              <td class="px-3 py-2">{{ gm.horario?.aula?.nombre || '—' }}</td>
+                              <td class="px-3 py-2">
+                                <span v-if="gm.docentes && gm.docentes.length" class="text-red-600">Asignado a {{ gm.docentes[0].user?.nombre }} {{ gm.docentes[0].user?.apellido }}</span>
+                                <span v-else class="text-green-600">Disponible</span>
+                              </td>
+                              <td class="px-3 py-2 text-center">
+                                <button
+                                  :disabled="gm.docentes && gm.docentes.length"
+                                  @click.prevent="asignarDesdeFila(gm)"
+                                  class="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                                >Asignar</button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                       <div v-if="errores.grupo_materia_id" class="text-red-600 text-sm mt-1">
                         {{ errores.grupo_materia_id[0] }}
                       </div>
@@ -169,6 +195,29 @@ const asignarGrupoMateria = async () => {
   try {
     await router.post(`/docentes/${docenteSeleccionado.value.id}/asignar-grupo-materia`, {
       grupo_materia_id: formulario.grupo_materia_id,
+    }, {
+      onError: (e) => {
+        Object.assign(errores, e);
+        cargando.value = false;
+      },
+      onSuccess: () => {
+        cerrarModal();
+        cargando.value = false;
+      },
+    });
+  } catch (error) {
+    cargando.value = false;
+  }
+};
+
+const asignarDesdeFila = async (gm) => {
+  if (!docenteSeleccionado.value) return;
+  cargando.value = true;
+  Object.keys(errores).forEach(key => delete errores[key]);
+
+  try {
+    await router.post(`/docentes/${docenteSeleccionado.value.id}/asignar-grupo-materia`, {
+      grupo_materia_id: gm.id,
     }, {
       onError: (e) => {
         Object.assign(errores, e);
