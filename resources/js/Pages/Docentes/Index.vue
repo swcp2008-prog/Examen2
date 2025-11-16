@@ -109,7 +109,7 @@
                               <td class="px-3 py-2">{{ gm.materia?.nombre || '—' }}</td>
                               <td class="px-3 py-2">{{ gm.horario?.dia_semana || '—' }}</td>
                               <td class="px-3 py-2">{{ gm.horario ? gm.horario.hora_inicio + ' - ' + gm.horario.hora_fin : '—' }}</td>
-                              <td class="px-3 py-2">{{ gm.horario?.aula?.nombre || '—' }}</td>
+                              <td class="px-3 py-2">{{ gm.horario?.aula?.nombre_aula || '—' }}</td>
                               <td class="px-3 py-2">
                                 <span v-if="gm.docentes && gm.docentes.length" class="text-red-600">Asignado a {{ gm.docentes[0].user?.nombre }} {{ gm.docentes[0].user?.apellido }}</span>
                                 <span v-else class="text-green-600">Disponible</span>
