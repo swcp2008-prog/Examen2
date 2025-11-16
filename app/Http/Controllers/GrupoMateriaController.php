@@ -9,6 +9,7 @@ use App\Models\Horario;
 use App\Services\BitacoraService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class GrupoMateriaController extends Controller
 {
@@ -155,6 +156,8 @@ class GrupoMateriaController extends Controller
 
         $nuevosHorarios = $validated['horario_ids'];
 
+        Log::info('GrupoMateria update called', ['id' => $grupoMateria->id, 'horario_ids' => $nuevosHorarios, 'user_id' => auth()->id()]);
+
         // Validaciones: revisar conflictos por cada horario a asignar
         $docentes = $grupoMateria->docentes()->get();
         foreach ($nuevosHorarios as $horarioId) {
@@ -179,6 +182,8 @@ class GrupoMateriaController extends Controller
         $grupoMateria->horarios()->sync($nuevosHorarios);
 
         BitacoraService::registrar('ACTUALIZAR', 'grupo_materias', $grupoMateria->id, 'GrupoMateria actualizado');
+
+        Log::info('GrupoMateria update successful', ['id' => $grupoMateria->id, 'now_count' => $grupoMateria->horarios()->count()]);
 
         return redirect()->route('grupo-materias.index')
             ->with('success', 'Asignación actualizada exitosamente');
