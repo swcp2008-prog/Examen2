@@ -135,7 +135,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineProps({
@@ -143,6 +143,7 @@ defineProps({
   horarios: Array,
 });
 
+const page = usePage();
 const mostrarModal = ref(false);
 const grupoMateriaSeleccionado = ref(null);
 const cargando = ref(false);
@@ -164,6 +165,17 @@ const cerrarModal = () => {
   grupoMateriaSeleccionado.value = null;
 };
 
+/**
+ * Flash a banner message into Jetstream session without reloading
+ */
+const flashError = (mensaje) => {
+  if (!page.props.jetstream) page.props.jetstream = {};
+  page.props.jetstream.flash = {
+    banner: mensaje,
+    bannerStyle: 'danger',
+  };
+};
+
 const asignarHorario = async () => {
   cargando.value = true;
   Object.keys(errores).forEach(key => delete errores[key]);
@@ -175,21 +187,33 @@ const asignarHorario = async () => {
     const horario_ids = existentes.slice();
     if (nuevo && !horario_ids.includes(nuevo)) horario_ids.push(nuevo);
 
-    await router.put(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
-      horario_ids,
-    }, {
-      onError: (e) => {
-        Object.assign(errores, e);
-        cargando.value = false;
+    // Hacer PUT con respuesta JSON para capturar errores 422
+    const response = await fetch(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
       },
-      onSuccess: () => {
-        cerrarModal();
-        cargando.value = false;
-        // Recargar datos para mostrar el horario recién asignado
-        router.reload();
-      },
+      body: JSON.stringify({ horario_ids }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Error (422, 500, etc.) — mostrar mensaje como banner
+      const errorMsg = data.error || data.message || 'Error al asignar horario';
+      flashError(errorMsg);
+      cargando.value = false;
+      return;
+    }
+
+    // Éxito — cerrar modal y recargar datos
+    cerrarModal();
+    cargando.value = false;
+    router.reload();
   } catch (error) {
+    flashError('Error al asignar horario: ' + error.message);
     cargando.value = false;
   }
 };
