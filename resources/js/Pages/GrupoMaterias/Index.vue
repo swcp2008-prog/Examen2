@@ -123,7 +123,7 @@
                       <div v-if="erroresAsignacion" class="text-red-600 text-sm mt-1">
                         {{ erroresAsignacion }}
                       </div>
-                      <div v-if="!formulario.horario_id" class="text-red-600 text-sm mt-1">
+                      <div v-if="intentoAsignar && !formulario.horario_id" class="text-red-600 text-sm mt-1">
                         Por favor, selecciona al menos un horario.
                       </div>
                     </div>
@@ -178,6 +178,7 @@ const formulario = reactive({
 const horariosDisponiblesParaModal = ref([]);
 const cargandoHorarios = ref(false);
 const erroresAsignacion = ref(null);
+const intentoAsignar = ref(false);
 
 const abrirModalAsignarHorario = (grupoMateria) => {
   grupoMateriaSeleccionado.value = grupoMateria;
@@ -185,6 +186,7 @@ const abrirModalAsignarHorario = (grupoMateria) => {
   Object.keys(errores).forEach(key => delete errores[key]);
   mostrarModal.value = true;
   erroresAsignacion.value = null;
+  intentoAsignar.value = false;
   cargarHorariosDisponibles(grupoMateria);
 };
 
@@ -231,9 +233,16 @@ const asignarHorario = async () => {
 
   try {
     // Construir arreglo de horario_ids: mantener los existentes y añadir el nuevo (si no vacío)
+    intentoAsignar.value = true;
     const existentes = (grupoMateriaSeleccionado.value.horarios || []).map(h => h.id);
     const nuevo = formulario.horario_id ? parseInt(formulario.horario_id) : null;
     const horario_ids = existentes.slice();
+    if (!nuevo) {
+      // No seleccionó nuevo horario
+      erroresAsignacion.value = 'Selecciona un horario antes de continuar.';
+      cargando.value = false;
+      return;
+    }
     if (nuevo && !horario_ids.includes(nuevo)) horario_ids.push(nuevo);
 
     // Hacer PUT con respuesta JSON para capturar errores 422
