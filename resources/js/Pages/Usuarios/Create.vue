@@ -143,11 +143,6 @@ const props = defineProps({
   },
 });
 
-const isDocente = computed(() => {
-  const rol = roles.find(r => r.id == form.rol_id);
-  return rol && rol.nombre.toLowerCase() === 'docente';
-});
-
 const form = useForm({
   nombre: '',
   apellido: '',
@@ -158,6 +153,11 @@ const form = useForm({
   especialidad: '',
   fecha_contrato: '',
   estado: 'activo',
+});
+
+const isDocente = computed(() => {
+  const rol = props.roles.find(r => r.id == form.rol_id);
+  return rol && rol.nombre.toLowerCase() === 'docente';
 });
 
 const submit = () => {
