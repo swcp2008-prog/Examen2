@@ -23,14 +23,21 @@ class UsuarioController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->authorize('create', 'usuarios');
         
         $roles = Rol::all();
+        $rolPreseleccionado = null;
+        
+        // Si viene un parámetro 'rol', buscar el rol por nombre
+        if ($request->has('rol')) {
+            $rolPreseleccionado = Rol::where('nombre', ucfirst($request->get('rol')))->first();
+        }
         
         return Inertia::render('Usuarios/Create', [
             'roles' => $roles,
+            'rolPreseleccionado' => $rolPreseleccionado?->id,
         ]);
     }
 

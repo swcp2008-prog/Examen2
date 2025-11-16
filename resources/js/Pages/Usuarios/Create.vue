@@ -104,13 +104,14 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 defineProps({
   roles: Array,
+  rolPreseleccionado: Number,
 });
 
 const form = useForm({
   nombre: '',
   apellido: '',
   email: '',
-  rol_id: '',
+  rol_id: rolPreseleccionado || '',
   password: '',
   password_confirmation: '',
 });
