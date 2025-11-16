@@ -51,6 +51,16 @@ import { Link } from '@inertiajs/vue3';
                         </div>
                     </Link>
 
+                    <!-- Grupo-Materias -->
+                    <Link href="/grupo-materias" class="block group">
+                        <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
+                            <div class="text-4xl mb-4">📚</div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">Grupo-Materias</h3>
+                            <p class="text-gray-600 text-sm mb-4">Asignar materias a grupos con horarios</p>
+                            <div class="text-teal-600 text-sm font-semibold">CU12 →</div>
+                        </div>
+                    </Link>
+
                     <!-- Asistencias -->
                     <Link href="/asistencias" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
