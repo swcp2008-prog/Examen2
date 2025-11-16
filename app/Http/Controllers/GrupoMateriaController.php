@@ -275,4 +275,74 @@ class GrupoMateriaController extends Controller
 
         return redirect()->route('grupo-materias.index');
     }
+
+    /**
+     * Retorna horarios disponibles para una grupoMateria específica
+     * (considera horarios ya asignados y excluye conflictos)
+     */
+    public function getHorariosDisponibles(GrupoMateria $grupoMateria)
+    {
+        $this->authorize('view', 'grupos');
+
+        $horariosActuales = $grupoMateria->horarios()->pluck('horarios.id')->toArray();
+        
+        // Obtener todos los horarios
+        $todosHorarios = Horario::with('aula')->get();
+        
+        // Obtener horarios ocupados por OTRAS grupoMaterias
+        $ocupados = \DB::table('grupo_materia_horario')
+            ->where('grupo_materia_id', '!=', $grupoMateria->id)
+            ->pluck('horario_id')
+            ->toArray();
+
+        $disponibles = [];
+        foreach ($todosHorarios as $h) {
+            $esActual = in_array($h->id, $horariosActuales);
+            $esOcupado = in_array($h->id, $ocupados);
+            
+            // Disponible si: es actual O (no ocupado Y no hay conflicto aula/docente)
+            if ($esActual) {
+                $h->disponible = true;
+                $h->razon = 'Ya asignado';
+                $disponibles[] = $h;
+            } elseif (!$esOcupado) {
+                // Verificar conflictos de aula
+                $aulaConflict = false;
+                if ($h->aula_id) {
+                    $aulaConflict = \DB::table('horarios')
+                        ->join('grupo_materia_horario', 'horarios.id', '=', 'grupo_materia_horario.horario_id')
+                        ->where('horarios.dia_semana', $h->dia_semana)
+                        ->where('horarios.aula_id', $h->aula_id)
+                        ->where('grupo_materia_horario.grupo_materia_id', '!=', $grupoMateria->id)
+                        ->where('horarios.hora_inicio', '<', $h->hora_fin)
+                        ->where('horarios.hora_fin', '>', $h->hora_inicio)
+                        ->exists();
+                }
+
+                // Verificar conflictos de docentes
+                $docenteConflict = false;
+                $docentes = $grupoMateria->docentes()->get();
+                foreach ($docentes as $docente) {
+                    if ($docente->verificarConflictoHorario($h->id, $grupoMateria->id)) {
+                        $docenteConflict = true;
+                        break;
+                    }
+                }
+
+                if (!$aulaConflict && !$docenteConflict) {
+                    $h->disponible = true;
+                    $h->razon = 'Disponible';
+                    $disponibles[] = $h;
+                } else {
+                    $h->disponible = false;
+                    $h->razon = $aulaConflict ? 'Conflicto de aula' : 'Conflicto de docente';
+                }
+            } else {
+                $h->disponible = false;
+                $h->razon = 'Ocupado por otra materia';
+            }
+        }
+        
+        return response()->json(['horarios' => $disponibles]);
+    }
 }

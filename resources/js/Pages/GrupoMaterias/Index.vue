@@ -92,17 +92,39 @@
                       <label class="block text-sm font-medium text-gray-700 mb-2">
                         Selecciona un horario:
                       </label>
+                      <div v-if="cargandoHorarios" class="text-gray-600 text-sm italic py-2">
+                        Cargando horarios disponibles...
+                      </div>
                       <select v-model="formulario.horario_id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">-- Selecciona --</option>
-                        <option v-for="horario in horarios" :key="horario.id" :value="horario.id"
-                          :disabled="horario.disponible === false && !(grupoMateriaSeleccionado?.horarios || []).map(h => h.id).includes(horario.id)">
-                          {{ horario.dia_semana }} {{ horario.hora_inicio }} - {{ horario.hora_fin }} (Aula: {{ horario.aula?.nombre_aula || 'N/A' }})
-                          <span v-if="horario.disponible === false"> - (Ocupado)</span>
-                          <span v-else> - (Disponible)</span>
-                        </option>
+                        <option value="">-- Selecciona un horario --</option>
+                        <optgroup label="✅ Disponibles">
+                          <option v-for="h in horariosDisponiblesParaModal.filter(h => h.disponible)" :key="h.id" :value="h.id">
+                            {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} (Aula: {{ h.aula?.nombre_aula || 'N/A' }})
+                          </option>
+                        </optgroup>
+                        <optgroup label="🔒 No disponibles">
+                          <option v-for="h in horariosDisponiblesParaModal.filter(h => !h.disponible)" :key="h.id" :value="h.id" disabled>
+                            {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} - {{ h.razon }}
+                          </option>
+                        </optgroup>
                       </select>
+                      <!-- Mostrar horarios ya asignados a este grupoMateria -->
+                      <div v-if="grupoMateriaSeleccionado?.horarios?.length > 0" class="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+                        <p class="text-sm font-medium text-blue-900">Horarios asignados actualmente:</p>
+                        <div class="mt-1 space-y-1">
+                          <span v-for="h in grupoMateriaSeleccionado.horarios" :key="h.id" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-200 text-blue-800 mr-2 mt-1">
+                            {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }}
+                          </span>
+                        </div>
+                      </div>
                       <div v-if="errores.horario_id" class="text-red-600 text-sm mt-1">
                         {{ errores.horario_id[0] }}
+                      </div>
+                      <div v-if="erroresAsignacion" class="text-red-600 text-sm mt-1">
+                        {{ erroresAsignacion }}
+                      </div>
+                      <div v-if="formulario.horario_id.length === 0" class="text-red-600 text-sm mt-1">
+                        Por favor, selecciona al menos un horario.
                       </div>
                     </div>
                   </div>
@@ -153,16 +175,41 @@ const formulario = reactive({
   horario_id: '',
 });
 
+const horariosDisponiblesParaModal = ref([]);
+const cargandoHorarios = ref(false);
+
 const abrirModalAsignarHorario = (grupoMateria) => {
   grupoMateriaSeleccionado.value = grupoMateria;
   formulario.horario_id = '';
   Object.keys(errores).forEach(key => delete errores[key]);
   mostrarModal.value = true;
+  cargarHorariosDisponibles(grupoMateria);
 };
 
 const cerrarModal = () => {
   mostrarModal.value = false;
   grupoMateriaSeleccionado.value = null;
+}
+/**
+ * Cargar dinámicamente los horarios disponibles para una grupoMateria
+ */
+const cargarHorariosDisponibles = async (grupoMateria) => {
+  cargandoHorarios.value = true;
+  try {
+    const response = await fetch(`/grupo-materias/${grupoMateria.id}/horarios-disponibles`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+    const data = await response.json();
+    horariosDisponiblesParaModal.value = data.horarios || [];
+  } catch (error) {
+    console.error('Error cargando horarios disponibles:', error);
+    horariosDisponiblesParaModal.value = [];
+  } finally {
+    cargandoHorarios.value = false;
+  }
 };
 
 /**

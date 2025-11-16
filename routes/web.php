@@ -65,6 +65,7 @@ Route::middleware([
 
     // Rutas de Grupo-Materias
     Route::resource('grupo-materias', GrupoMateriaController::class);
+        Route::get('/grupo-materias/{grupoMateria}/horarios-disponibles', [GrupoMateriaController::class, 'getHorariosDisponibles'])->name('grupo-materias.horarios-disponibles');
 
     // Rutas de Docentes (CU12, CU13, CU15)
     Route::get('/docentes', [DocenteController::class, 'index'])->name('docentes.index');
