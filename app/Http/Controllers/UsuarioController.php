@@ -51,15 +51,37 @@ class UsuarioController extends Controller
             'email' => 'required|email|unique:users,email',
             'rol_id' => 'required|exists:roles,id',
             'password' => 'required|string|min:8|confirmed',
+            // Validar campos de docente solo si el rol es docente
+            'especialidad' => 'required_if:rol_id,' . $this->getDocenteRolId() . '|nullable|string|max:255',
+            'fecha_contrato' => 'required_if:rol_id,' . $this->getDocenteRolId() . '|nullable|date',
+            'estado' => 'required_if:rol_id,' . $this->getDocenteRolId() . '|nullable|in:activo,inactivo',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
         $usuario = User::create($validated);
 
+        // Si el rol es Docente, crear registro en docentes
+        $rolDocenteId = $this->getDocenteRolId();
+        if ($usuario->rol_id == $rolDocenteId) {
+            $usuario->docente()->create([
+                'especialidad' => $request->input('especialidad'),
+                'fecha_contrato' => $request->input('fecha_contrato'),
+                'estado' => $request->input('estado'),
+            ]);
+        }
+
         BitacoraService::registrar('CREAR', 'usuarios', $usuario->id, 'Usuario creado: ' . $usuario->email);
 
         return redirect()->route('usuarios.index')
             ->with('success', 'Usuario creado exitosamente');
+    }
+
+    /**
+     * Devuelve el ID del rol Docente
+     */
+    private function getDocenteRolId()
+    {
+        return Rol::whereRaw('LOWER(nombre) = ?', ['docente'])->value('id');
     }
 
     public function edit(User $usuario)

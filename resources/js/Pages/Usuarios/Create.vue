@@ -57,6 +57,38 @@
                 <p v-if="form.errors.rol_id" class="text-red-600 text-sm mt-1">{{ form.errors.rol_id }}</p>
               </div>
 
+              <!-- Campos adicionales para Docente -->
+              <div v-if="isDocente">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Especialidad</label>
+                  <input 
+                    v-model="form.especialidad" 
+                    type="text"
+                    required
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  />
+                  <p v-if="form.errors.especialidad" class="text-red-600 text-sm mt-1">{{ form.errors.especialidad }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Fecha de Contrato</label>
+                  <input 
+                    v-model="form.fecha_contrato" 
+                    type="date"
+                    required
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  />
+                  <p v-if="form.errors.fecha_contrato" class="text-red-600 text-sm mt-1">{{ form.errors.fecha_contrato }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Estado</label>
+                  <select v-model="form.estado" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                  <p v-if="form.errors.estado" class="text-red-600 text-sm mt-1">{{ form.errors.estado }}</p>
+                </div>
+              </div>
+
               <div>
                 <label class="block text-sm font-medium text-gray-700">Contraseña</label>
                 <input 
@@ -101,6 +133,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps({
   roles: Array,
@@ -110,6 +143,11 @@ const props = defineProps({
   },
 });
 
+const isDocente = computed(() => {
+  const rol = roles.find(r => r.id == form.rol_id);
+  return rol && rol.nombre.toLowerCase() === 'docente';
+});
+
 const form = useForm({
   nombre: '',
   apellido: '',
@@ -117,6 +155,9 @@ const form = useForm({
   rol_id: props.rolPreseleccionado || '',
   password: '',
   password_confirmation: '',
+  especialidad: '',
+  fecha_contrato: '',
+  estado: 'activo',
 });
 
 const submit = () => {
