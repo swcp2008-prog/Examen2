@@ -16,11 +16,14 @@ class GrupoMateriaController extends Controller
     {
         $this->authorize('view', 'grupos');
         
-        $grupoMaterias = GrupoMateria::with(['grupo', 'materia', 'horario', 'horario.aula'])
+        $gruposMaterias = GrupoMateria::with(['grupo', 'materia', 'horario', 'horario.aula'])
             ->paginate(15);
+        
+        $horarios = Horario::with('aula')->get();
 
         return Inertia::render('GrupoMaterias/Index', [
-            'grupoMaterias' => $grupoMaterias,
+            'gruposMaterias' => $gruposMaterias,
+            'horarios' => $horarios,
         ]);
     }
 
