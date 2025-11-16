@@ -48,7 +48,7 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button @click="abrirModalAsignarHorario(grupoMateria)" class="text-blue-600 hover:text-blue-900">🕐 Asignar Horario</button>
+                      <button @click="abrirModalAsignarHorario(grupoMateria)" class="text-blue-600 hover:text-blue-900">➕ Añadir Horario</button>
                       <Link :href="`/grupo-materias/${grupoMateria.id}/edit`" class="text-indigo-600 hover:text-indigo-900">✏️ Editar</Link>
                       <button @click="confirmarEliminar(grupoMateria)" class="text-red-600 hover:text-red-900">🗑️ Eliminar</button>
                     </td>
@@ -123,7 +123,7 @@
                       <div v-if="erroresAsignacion" class="text-red-600 text-sm mt-1">
                         {{ erroresAsignacion }}
                       </div>
-                      <div v-if="formulario.horario_id.length === 0" class="text-red-600 text-sm mt-1">
+                      <div v-if="!formulario.horario_id" class="text-red-600 text-sm mt-1">
                         Por favor, selecciona al menos un horario.
                       </div>
                     </div>
@@ -133,12 +133,12 @@
 
               <!-- Botones -->
               <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button 
+                      <button 
                   @click="asignarHorario" 
                   :disabled="cargando"
                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-gray-400"
                 >
-                  {{ cargando ? "Asignando..." : "✅ Asignar" }}
+                  {{ cargando ? "Asignando..." : "➕ Añadir Horario" }}
                 </button>
                 <button 
                   @click="cerrarModal" 
@@ -177,12 +177,14 @@ const formulario = reactive({
 
 const horariosDisponiblesParaModal = ref([]);
 const cargandoHorarios = ref(false);
+const erroresAsignacion = ref(null);
 
 const abrirModalAsignarHorario = (grupoMateria) => {
   grupoMateriaSeleccionado.value = grupoMateria;
   formulario.horario_id = '';
   Object.keys(errores).forEach(key => delete errores[key]);
   mostrarModal.value = true;
+  erroresAsignacion.value = null;
   cargarHorariosDisponibles(grupoMateria);
 };
 
@@ -250,12 +252,14 @@ const asignarHorario = async () => {
     if (!response.ok) {
       // Error (422, 500, etc.) — mostrar mensaje como banner
       const errorMsg = data.error || data.message || 'Error al asignar horario';
+      erroresAsignacion.value = errorMsg;
       flashError(errorMsg);
       cargando.value = false;
       return;
     }
 
     // Éxito — cerrar modal y recargar datos
+    erroresAsignacion.value = null;
     cerrarModal();
     cargando.value = false;
     router.reload();
