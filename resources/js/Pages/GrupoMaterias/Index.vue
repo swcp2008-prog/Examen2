@@ -92,8 +92,11 @@
                       </label>
                       <select v-model="formulario.horario_id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         <option value="">-- Selecciona --</option>
-                        <option v-for="horario in horarios" :key="horario.id" :value="horario.id">
+                        <option v-for="horario in horarios" :key="horario.id" :value="horario.id"
+                          :disabled="horario.disponible === false && horario.id !== grupoMateriaSeleccionado?.horario_id">
                           {{ horario.dia_semana }} {{ horario.hora_inicio }} - {{ horario.hora_fin }} (Aula: {{ horario.aula?.nombre_aula || 'N/A' }})
+                          <span v-if="horario.disponible === false"> - (Ocupado)</span>
+                          <span v-else> - (Disponible)</span>
                         </option>
                       </select>
                       <div v-if="errores.horario_id" class="text-red-600 text-sm mt-1">

@@ -65,8 +65,10 @@
                   :class="{ 'border-red-500': errores.horario_id }"
                 >
                   <option value="">-- Selecciona un Horario --</option>
-                  <option v-for="horario in horarios" :key="horario.id" :value="horario.id">
+                  <option v-for="horario in horarios" :key="horario.id" :value="horario.id" :disabled="horario.disponible === false">
                     {{ horario.dia_semana }} ({{ horario.hora_inicio }} - {{ horario.hora_fin }}) - {{ horario.aula?.nombre_aula || 'N/A' }}
+                    <span v-if="horario.disponible === false"> - (Ocupado)</span>
+                    <span v-else> - (Disponible)</span>
                   </option>
                 </select>
                 <p v-if="errores.horario_id" class="mt-1 text-sm text-red-600">

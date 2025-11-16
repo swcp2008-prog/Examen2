@@ -21,6 +21,13 @@ class GrupoMateriaController extends Controller
         
         $horarios = Horario::with('aula')->get();
 
+        // Determinar qué horarios ya están ocupados por alguna asignación
+        $horariosUsados = GrupoMateria::whereNotNull('horario_id')->pluck('horario_id')->toArray();
+
+        foreach ($horarios as $horario) {
+            $horario->disponible = !in_array($horario->id, $horariosUsados);
+        }
+
         return Inertia::render('GrupoMaterias/Index', [
             'gruposMaterias' => $gruposMaterias,
             'horarios' => $horarios,
@@ -34,6 +41,12 @@ class GrupoMateriaController extends Controller
         $grupos = Grupo::all();
         $materias = Materia::all();
         $horarios = Horario::with('aula')->get();
+
+        // Marcar disponibilidad de horarios (para crear asignaciones)
+        $horariosUsados = GrupoMateria::whereNotNull('horario_id')->pluck('horario_id')->toArray();
+        foreach ($horarios as $horario) {
+            $horario->disponible = !in_array($horario->id, $horariosUsados);
+        }
         
         return Inertia::render('GrupoMaterias/Create', [
             'grupos' => $grupos,
@@ -76,6 +89,16 @@ class GrupoMateriaController extends Controller
         $grupos = Grupo::all();
         $materias = Materia::all();
         $horarios = Horario::with('aula')->get();
+
+        // Para edición, considerar como disponible el horario que ya tiene esta asignación
+        $horariosUsados = GrupoMateria::whereNotNull('horario_id')
+            ->where('id', '!=', $grupoMateria->id)
+            ->pluck('horario_id')
+            ->toArray();
+
+        foreach ($horarios as $horario) {
+            $horario->disponible = !in_array($horario->id, $horariosUsados);
+        }
         
         return Inertia::render('GrupoMaterias/Edit', [
             'grupoMateria' => $grupoMateria,
