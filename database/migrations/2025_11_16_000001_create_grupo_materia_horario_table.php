@@ -13,23 +13,33 @@ class CreateGrupoMateriaHorarioTable extends Migration
      */
     public function up()
     {
-        Schema::create('grupo_materia_horario', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('grupo_materia_id');
-            $table->unsignedBigInteger('horario_id');
-            $table->timestamps();
+        // Crear tabla pivot solo si no existe (idempotente)
+        if (!Schema::hasTable('grupo_materia_horario')) {
+            Schema::create('grupo_materia_horario', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('grupo_materia_id');
+                $table->unsignedBigInteger('horario_id');
+                $table->timestamps();
 
-            $table->foreign('grupo_materia_id')->references('id')->on('grupo_materias')->onDelete('cascade');
-            $table->foreign('horario_id')->references('id')->on('horarios')->onDelete('cascade');
+                $table->foreign('grupo_materia_id')->references('id')->on('grupo_materias')->onDelete('cascade');
+                $table->foreign('horario_id')->references('id')->on('horarios')->onDelete('cascade');
 
-            // Evitar que un mismo horario sea asignado a más de una GrupoMateria
-            $table->unique('horario_id');
-        });
+                // Evitar que un mismo horario sea asignado a más de una GrupoMateria
+                $table->unique('horario_id');
+            });
+        }
 
         // Migrar datos existentes desde grupo_materias.horario_id al pivot
         if (Schema::hasColumn('grupo_materias', 'horario_id')) {
             $rows = \DB::table('grupo_materias')->whereNotNull('horario_id')->get(['id', 'horario_id']);
             foreach ($rows as $r) {
+                // Evitar insertar duplicados (si ya existe un registro para ese horario)
+                $exists = \DB::table('grupo_materia_horario')->where('horario_id', $r->horario_id)->exists();
+                if ($exists) {
+                    // si ya existe, saltar (no insertar) para evitar violar la constraint única
+                    continue;
+                }
+
                 \DB::table('grupo_materia_horario')->insert([
                     'grupo_materia_id' => $r->id,
                     'horario_id' => $r->horario_id,
@@ -38,13 +48,10 @@ class CreateGrupoMateriaHorarioTable extends Migration
                 ]);
             }
 
-            // Eliminar la columna antigua
-            Schema::table('grupo_materias', function (Blueprint $table) {
-                if (Schema::hasColumn('grupo_materias', 'horario_id')) {
-                    $table->dropForeign(['horario_id']);
-                    $table->dropColumn('horario_id');
-                }
-            });
+            // NOTA: no eliminamos la columna antigua `horario_id` automáticamente
+            // para mantener compatibilidad y permitir verificaciones manuales.
+            // Si deseas eliminarla, hazlo con una migración separada después de
+            // validar que todos los datos y la aplicación funcionan correctamente.
         }
     }
 
