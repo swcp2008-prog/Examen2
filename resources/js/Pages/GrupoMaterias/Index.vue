@@ -185,6 +185,8 @@ const asignarHorario = async () => {
       onSuccess: () => {
         cerrarModal();
         cargando.value = false;
+        // Recargar datos para mostrar el horario recién asignado
+        router.reload();
       },
     });
   } catch (error) {

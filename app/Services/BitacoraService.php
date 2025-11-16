@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Bitacora;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Session;
 
 class BitacoraService
 {
@@ -23,6 +24,17 @@ class BitacoraService
             'ip_origen' => Request::ip(),
             'user_agent' => Request::userAgent(),
             'fecha_hora' => now(),
+        ]);
+    }
+
+    /**
+     * Flash a Jetstream-style banner message into session for UI display.
+     */
+    public static function flash(string $mensaje, string $estilo = 'success'): void
+    {
+        Session::flash('jetstream.flash', [
+            'banner' => $mensaje,
+            'bannerStyle' => $estilo,
         ]);
     }
 }

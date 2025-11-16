@@ -40,9 +40,9 @@ class MateriaController extends Controller
         $materia = Materia::create($validated);
 
         BitacoraService::registrar('CREAR', 'materias', $materia->id, 'Materia creada: ' . $materia->nombre);
+        BitacoraService::flash('Materia creada exitosamente', 'success');
 
-        return redirect()->route('materias.index')
-            ->with('success', 'Materia creada exitosamente');
+        return redirect()->route('materias.index');
     }
 
     public function edit(Materia $materia)
@@ -67,9 +67,9 @@ class MateriaController extends Controller
         $materia->update($validated);
 
         BitacoraService::registrar('ACTUALIZAR', 'materias', $materia->id, 'Materia actualizada');
+        BitacoraService::flash('Materia actualizada exitosamente', 'success');
 
-        return redirect()->route('materias.index')
-            ->with('success', 'Materia actualizada exitosamente');
+        return redirect()->route('materias.index');
     }
 
     public function destroy(Materia $materia)
@@ -84,7 +84,8 @@ class MateriaController extends Controller
         
         $materia->delete();
 
-        return redirect()->route('materias.index')
-            ->with('success', 'Materia eliminada exitosamente');
+        BitacoraService::flash('Materia eliminada exitosamente', 'success');
+
+        return redirect()->route('materias.index');
     }
 }

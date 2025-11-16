@@ -97,6 +97,31 @@ class GrupoMateriaController extends Controller
             return back()->withErrors(['error' => 'Algunos horarios seleccionados ya están ocupados']);
         }
 
+        // Verificar conflicto por aula (solapamiento de intervalos) para cada horario seleccionado
+        foreach ($horariosSeleccionados as $horId) {
+            $h = Horario::find($horId);
+            if (!$h) continue;
+            if ($h->aula_id) {
+                $aulaConflict = \DB::table('horarios')
+                    ->join('grupo_materia_horario', 'horarios.id', '=', 'grupo_materia_horario.horario_id')
+                    ->where('horarios.dia_semana', $h->dia_semana)
+                    ->where('horarios.aula_id', $h->aula_id)
+                    // overlapping condition: inicioA < finB AND finA > inicioB
+                    ->where('horarios.hora_inicio', '<', $h->hora_fin)
+                    ->where('horarios.hora_fin', '>', $h->hora_inicio)
+                    ->exists();
+
+                if ($aulaConflict) {
+                    $msg = "Conflicto de aula: la aula ya está ocupada en {$h->dia_semana} {$h->hora_inicio}-{$h->hora_fin}";
+                    \Illuminate\Support\Facades\Log::info('GrupoMateria store blocked - conflicto aula', ['horario_id' => $horId, 'detalle' => $msg]);
+                    if (request()->wantsJson()) {
+                        return response()->json(['error' => $msg], 422);
+                    }
+                    return back()->withErrors(['error' => $msg]);
+                }
+            }
+        }
+
         $grupoMateria = GrupoMateria::create([
             'grupo_id' => $validated['grupo_id'],
             'materia_id' => $validated['materia_id'],
@@ -107,8 +132,10 @@ class GrupoMateriaController extends Controller
 
         BitacoraService::registrar('CREAR', 'grupo_materias', $grupoMateria->id, 'GrupoMateria creado');
 
-        return redirect()->route('grupo-materias.index')
-            ->with('success', 'Asignación creada exitosamente');
+        // Flash UI message
+        BitacoraService::flash('Grupo-Materia asignado correctamente', 'success');
+
+        return redirect()->route('grupo-materias.index');
     }
 
     public function edit(GrupoMateria $grupoMateria)
@@ -156,37 +183,84 @@ class GrupoMateriaController extends Controller
 
         $nuevosHorarios = $validated['horario_ids'];
 
-        Log::info('GrupoMateria update called', ['id' => $grupoMateria->id, 'horario_ids' => $nuevosHorarios, 'user_id' => auth()->id()]);
+        Log::info('GrupoMateria update called', ['id' => $grupoMateria->id, 'horario_ids' => $nuevosHorarios, 'user_id' => auth()->id(), 'payload' => $request->all()]);
 
         // Validaciones: revisar conflictos por cada horario a asignar
         $docentes = $grupoMateria->docentes()->get();
         foreach ($nuevosHorarios as $horarioId) {
+            // Verificar conflicto por aula (solapamiento de intervalos)
+            $hCheck = Horario::find($horarioId);
+            if ($hCheck && $hCheck->aula_id) {
+                $aulaConflict = \DB::table('horarios')
+                    ->join('grupo_materia_horario', 'horarios.id', '=', 'grupo_materia_horario.horario_id')
+                    ->where('horarios.dia_semana', $hCheck->dia_semana)
+                    ->where('horarios.aula_id', $hCheck->aula_id)
+                    ->where('grupo_materia_horario.grupo_materia_id', '!=', $grupoMateria->id)
+                    ->where('horarios.hora_inicio', '<', $hCheck->hora_fin)
+                    ->where('horarios.hora_fin', '>', $hCheck->hora_inicio)
+                    ->exists();
+
+                if ($aulaConflict) {
+                    $msg = "Conflicto de aula: la aula ya está ocupada en {$hCheck->dia_semana} {$hCheck->hora_inicio}-{$hCheck->hora_fin}";
+                    Log::info('GrupoMateria update blocked - conflicto aula', ['grupo_materia_id' => $grupoMateria->id, 'horario_id' => $horarioId, 'detalle' => $msg]);
+                    if ($request->wantsJson()) {
+                        return response()->json(['error' => $msg], 422);
+                    }
+                    return back()->withErrors(['error' => $msg]);
+                }
+            }
+
             // Verificar que el horario no esté ocupado por otra asignación
             $ocupadoPor = GrupoMateria::whereHas('horarios', fn($q) => $q->where('horarios.id', $horarioId))
                 ->where('id', '!=', $grupoMateria->id)
                 ->first();
             if ($ocupadoPor) {
-                return back()->withErrors(['error' => "El horario {$horarioId} ya está ocupado por {$ocupadoPor->grupo->nombre} - {$ocupadoPor->materia->nombre}"]);
+                $msg = "El horario {$horarioId} ya está ocupado por {$ocupadoPor->grupo->nombre} - {$ocupadoPor->materia->nombre}";
+                Log::info('GrupoMateria update blocked - horario ocupado', ['grupo_materia_id' => $grupoMateria->id, 'horario_id' => $horarioId, 'ocupado_por' => $ocupadoPor->id]);
+                if ($request->wantsJson()) {
+                    return response()->json(['error' => $msg], 422);
+                }
+                return back()->withErrors(['error' => $msg]);
             }
 
             // Verificar conflicto con docentes
             foreach ($docentes as $docente) {
                 $conflicto = $docente->verificarConflictoHorario($horarioId, $grupoMateria->id);
                 if ($conflicto) {
-                    return back()->withErrors(['error' => "No se puede asignar el horario: {$conflicto['mensaje']}"]);
+                    $msg = "No se puede asignar el horario: {$conflicto['mensaje']}";
+                    Log::info('GrupoMateria update blocked - conflicto docente', ['grupo_materia_id' => $grupoMateria->id, 'horario_id' => $horarioId, 'docente_id' => $docente->id, 'conflicto' => $conflicto]);
+                    if ($request->wantsJson()) {
+                        return response()->json(['error' => $conflicto], 422);
+                    }
+                    return back()->withErrors(['error' => $msg]);
                 }
             }
         }
 
         // Sin conflictos, sincronizar pivot
-        $grupoMateria->horarios()->sync($nuevosHorarios);
+        try {
+            $grupoMateria->horarios()->sync($nuevosHorarios);
+        } catch (\Exception $e) {
+            Log::error('Error syncing horarios for GrupoMateria', ['id' => $grupoMateria->id, 'error' => $e->getMessage()]);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Error al sincronizar horarios', 'exception' => $e->getMessage()], 500);
+            }
+            return back()->withErrors(['error' => 'Error al sincronizar horarios']);
+        }
 
         BitacoraService::registrar('ACTUALIZAR', 'grupo_materias', $grupoMateria->id, 'GrupoMateria actualizado');
 
-        Log::info('GrupoMateria update successful', ['id' => $grupoMateria->id, 'now_count' => $grupoMateria->horarios()->count()]);
+        $count = $grupoMateria->horarios()->count();
+        Log::info('GrupoMateria update successful', ['id' => $grupoMateria->id, 'now_count' => $count]);
 
-        return redirect()->route('grupo-materias.index')
-            ->with('success', 'Asignación actualizada exitosamente');
+        // Flash UI message
+        BitacoraService::flash('Grupo-Materia actualizado correctamente', 'success');
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'grupo_materia_id' => $grupoMateria->id, 'horario_ids' => $nuevosHorarios, 'count' => $count], 200);
+        }
+
+        return redirect()->route('grupo-materias.index');
     }
 
     public function destroy(GrupoMateria $grupoMateria)
@@ -197,7 +271,8 @@ class GrupoMateriaController extends Controller
         
         $grupoMateria->delete();
 
-        return redirect()->route('grupo-materias.index')
-            ->with('success', 'Asignación eliminada exitosamente');
+        BitacoraService::flash('Grupo-Materia eliminada', 'success');
+
+        return redirect()->route('grupo-materias.index');
     }
 }

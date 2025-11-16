@@ -56,8 +56,9 @@ class AsistenciaController extends Controller
 
         BitacoraService::registrar('CREAR', 'asistencias', $asistencia->id, 'Asistencia registrada');
 
-        return redirect()->route('asistencias.index')
-            ->with('success', 'Asistencia registrada exitosamente');
+        BitacoraService::flash('Asistencia registrada exitosamente', 'success');
+
+        return redirect()->route('asistencias.index');
     }
 
     public function registrarGrupo(Request $request)
@@ -94,8 +95,9 @@ class AsistenciaController extends Controller
 
         BitacoraService::registrar('CREAR', 'asistencias', $asistencia->id, 'Asistencia del docente en grupo registrada');
 
-        return redirect()->route('asistencias.index')
-            ->with('success', 'Asistencia del docente registrada exitosamente');
+        BitacoraService::flash('Asistencia del docente registrada exitosamente', 'success');
+
+        return redirect()->route('asistencias.index');
     }
 
     public function porDocenteGrupo(Request $request)

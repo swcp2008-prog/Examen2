@@ -71,9 +71,9 @@ class UsuarioController extends Controller
         }
 
         BitacoraService::registrar('CREAR', 'usuarios', $usuario->id, 'Usuario creado: ' . $usuario->email);
+        BitacoraService::flash('Usuario creado exitosamente', 'success');
 
-        return redirect()->route('usuarios.index')
-            ->with('success', 'Usuario creado exitosamente');
+        return redirect()->route('usuarios.index');
     }
 
     /**
@@ -118,9 +118,9 @@ class UsuarioController extends Controller
         $usuario->update($validated);
 
         BitacoraService::registrar('ACTUALIZAR', 'usuarios', $usuario->id, 'Usuario actualizado');
+        BitacoraService::flash('Usuario actualizado exitosamente', 'success');
 
-        return redirect()->route('usuarios.index')
-            ->with('success', 'Usuario actualizado exitosamente');
+        return redirect()->route('usuarios.index');
     }
 
     public function destroy(User $usuario)
@@ -131,8 +131,9 @@ class UsuarioController extends Controller
         
         $usuario->delete();
 
-        return redirect()->route('usuarios.index')
-            ->with('success', 'Usuario eliminado exitosamente');
+        BitacoraService::flash('Usuario eliminado exitosamente', 'success');
+
+        return redirect()->route('usuarios.index');
     }
 
     public function cambiarContrasena(Request $request)
@@ -153,8 +154,8 @@ class UsuarioController extends Controller
         ]);
 
         BitacoraService::registrar('CAMBIAR_CONTRASEÑA', 'usuarios', $usuario->id, 'Contraseña cambiad');
+        BitacoraService::flash('Contraseña actualizada exitosamente', 'success');
 
-        return redirect()->back()
-            ->with('success', 'Contraseña actualizada exitosamente');
+        return redirect()->back();
     }
 }

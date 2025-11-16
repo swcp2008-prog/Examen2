@@ -52,9 +52,9 @@ class RolController extends Controller
         $rol->permisos()->sync($validated['permisos']);
 
         BitacoraService::registrar('CREAR', 'roles', $rol->id, 'Rol creado: ' . $rol->nombre);
+        BitacoraService::flash('Rol creado exitosamente', 'success');
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Rol creado exitosamente');
+        return redirect()->route('roles.index');
     }
 
     public function edit(Rol $rol)
@@ -90,9 +90,9 @@ class RolController extends Controller
         $rol->permisos()->sync($validated['permisos']);
 
         BitacoraService::registrar('ACTUALIZAR', 'roles', $rol->id, 'Rol actualizado');
+        BitacoraService::flash('Rol actualizado exitosamente', 'success');
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Rol actualizado exitosamente');
+        return redirect()->route('roles.index');
     }
 
     public function destroy(Rol $rol)
@@ -107,7 +107,8 @@ class RolController extends Controller
         
         $rol->delete();
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Rol eliminado exitosamente');
+        BitacoraService::flash('Rol eliminado exitosamente', 'success');
+
+        return redirect()->route('roles.index');
     }
 }

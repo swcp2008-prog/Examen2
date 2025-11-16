@@ -41,9 +41,9 @@ class AulaController extends Controller
         $aula = Aula::create($validated);
 
         BitacoraService::registrar('CREAR', 'aulas', $aula->id, 'Aula creada: ' . $aula->nombre_aula);
+        BitacoraService::flash('Aula creada exitosamente', 'success');
 
-        return redirect()->route('aulas.index')
-            ->with('success', 'Aula creada exitosamente');
+        return redirect()->route('aulas.index');
     }
 
     public function edit(Aula $aula)
@@ -69,9 +69,9 @@ class AulaController extends Controller
         $aula->update($validated);
 
         BitacoraService::registrar('ACTUALIZAR', 'aulas', $aula->id, 'Aula actualizada');
+        BitacoraService::flash('Aula actualizada exitosamente', 'success');
 
-        return redirect()->route('aulas.index')
-            ->with('success', 'Aula actualizada exitosamente');
+        return redirect()->route('aulas.index');
     }
 
     public function destroy(Aula $aula)
@@ -86,8 +86,9 @@ class AulaController extends Controller
         
         $aula->delete();
 
-        return redirect()->route('aulas.index')
-            ->with('success', 'Aula eliminada exitosamente');
+        BitacoraService::flash('Aula eliminada exitosamente', 'success');
+
+        return redirect()->route('aulas.index');
     }
 
     public function disponibles(Request $request)

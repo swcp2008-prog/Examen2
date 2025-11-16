@@ -39,9 +39,9 @@ class GrupoController extends Controller
         $grupo = Grupo::create($validated);
 
         BitacoraService::registrar('CREAR', 'grupos', $grupo->id, 'Grupo creado: ' . $grupo->nombre);
+        BitacoraService::flash('Grupo creado exitosamente', 'success');
 
-        return redirect()->route('grupos.index')
-            ->with('success', 'Grupo creado exitosamente');
+        return redirect()->route('grupos.index');
     }
 
     public function edit(Grupo $grupo)
@@ -65,9 +65,9 @@ class GrupoController extends Controller
         $grupo->update($validated);
 
         BitacoraService::registrar('ACTUALIZAR', 'grupos', $grupo->id, 'Grupo actualizado');
+        BitacoraService::flash('Grupo actualizado exitosamente', 'success');
 
-        return redirect()->route('grupos.index')
-            ->with('success', 'Grupo actualizado exitosamente');
+        return redirect()->route('grupos.index');
     }
 
     public function destroy(Grupo $grupo)
@@ -82,7 +82,8 @@ class GrupoController extends Controller
         
         $grupo->delete();
 
-        return redirect()->route('grupos.index')
-            ->with('success', 'Grupo eliminado exitosamente');
+        BitacoraService::flash('Grupo eliminado exitosamente', 'success');
+
+        return redirect()->route('grupos.index');
     }
 }

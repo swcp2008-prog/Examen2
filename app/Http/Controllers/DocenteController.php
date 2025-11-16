@@ -66,9 +66,9 @@ class DocenteController extends Controller
         $docente->grupoMaterias()->attach($validated['grupo_materia_id']);
 
         BitacoraService::registrar('ASIGNAR', 'docente_grupo_materias', $docente->id, 'Grupo-Materia asignado a docente');
+        BitacoraService::flash('Asignación realizada exitosamente', 'success');
 
-        return redirect()->back()
-            ->with('success', 'Asignación realizada exitosamente');
+        return redirect()->back();
     }
 
     public function desasignarGrupoMateria(Docente $docente, GrupoMateria $grupoMateria)
@@ -78,9 +78,9 @@ class DocenteController extends Controller
         $docente->grupoMaterias()->detach($grupoMateria->id);
 
         BitacoraService::registrar('DESASIGNAR', 'docente_grupo_materias', $docente->id, 'Grupo-Materia desasignado');
+        BitacoraService::flash('Desasignación realizada exitosamente', 'success');
 
-        return redirect()->back()
-            ->with('success', 'Desasignación realizada exitosamente');
+        return redirect()->back();
     }
 
     public function horarios(Docente $docente)
@@ -146,8 +146,8 @@ class DocenteController extends Controller
         ]);
 
         BitacoraService::registrar('ACTUALIZAR', 'docentes', $docente->id, 'Docente actualizado');
+        BitacoraService::flash('Docente actualizado exitosamente', 'success');
 
-        return redirect()->route('docentes.index')
-            ->with('success', 'Docente actualizado exitosamente');
+        return redirect()->route('docentes.index');
     }
 }

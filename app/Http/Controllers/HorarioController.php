@@ -49,9 +49,9 @@ class HorarioController extends Controller
         $horario = Horario::create($validated);
 
         BitacoraService::registrar('CREAR', 'horarios', $horario->id, 'Horario creado');
+        BitacoraService::flash('Horario creado exitosamente', 'success');
 
-        return redirect()->route('horarios.index')
-            ->with('success', 'Horario creado exitosamente');
+        return redirect()->route('horarios.index');
     }
 
     public function edit(Horario $horario)
@@ -81,9 +81,9 @@ class HorarioController extends Controller
         $horario->update($validated);
 
         BitacoraService::registrar('ACTUALIZAR', 'horarios', $horario->id, 'Horario actualizado');
+        BitacoraService::flash('Horario actualizado exitosamente', 'success');
 
-        return redirect()->route('horarios.index')
-            ->with('success', 'Horario actualizado exitosamente');
+        return redirect()->route('horarios.index');
     }
 
     public function destroy(Horario $horario)
@@ -94,8 +94,9 @@ class HorarioController extends Controller
         
         $horario->delete();
 
-        return redirect()->route('horarios.index')
-            ->with('success', 'Horario eliminado exitosamente');
+        BitacoraService::flash('Horario eliminado exitosamente', 'success');
+
+        return redirect()->route('horarios.index');
     }
 
     public function semanales(Request $request)
