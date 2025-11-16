@@ -102,16 +102,19 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
-defineProps({
+const props = defineProps({
   roles: Array,
-  rolPreseleccionado: Number,
+  rolPreseleccionado: {
+    type: Number,
+    default: null,
+  },
 });
 
 const form = useForm({
   nombre: '',
   apellido: '',
   email: '',
-  rol_id: rolPreseleccionado || '',
+  rol_id: props.rolPreseleccionado || '',
   password: '',
   password_confirmation: '',
 });
