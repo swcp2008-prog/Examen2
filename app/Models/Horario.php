@@ -14,8 +14,9 @@ class Horario extends Model
         return $this->belongsTo(Aula::class);
     }
 
+    // Un horario puede pertenecer a varias asignaciones (pivot)
     public function grupoMaterias()
     {
-        return $this->hasMany(GrupoMateria::class);
+        return $this->belongsToMany(GrupoMateria::class, 'grupo_materia_horario', 'horario_id', 'grupo_materia_id')->withTimestamps();
     }
 }

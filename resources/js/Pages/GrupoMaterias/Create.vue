@@ -31,7 +31,6 @@
                   {{ errores.grupo_id[0] }}
                 </p>
               </div>
-
               <!-- Materia -->
               <div class="mb-6">
                 <label for="materia_id" class="block text-sm font-medium text-gray-700 mb-2">
@@ -53,26 +52,26 @@
                 </p>
               </div>
 
-              <!-- Horario -->
+              <!-- Horario (múltiples - teoría/práctica) -->
               <div class="mb-6">
-                <label for="horario_id" class="block text-sm font-medium text-gray-700 mb-2">
-                  Horario-Aula *
+                <label for="horario_ids" class="block text-sm font-medium text-gray-700 mb-2">
+                  Horarios-Aula (puedes seleccionar varios)
                 </label>
                 <select
-                  id="horario_id"
-                  v-model="formulario.horario_id"
+                  id="horario_ids"
+                  v-model="formulario.horario_ids"
+                  multiple
                   class="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  :class="{ 'border-red-500': errores.horario_id }"
+                  :class="{ 'border-red-500': errores.horario_ids }"
                 >
-                  <option value="">-- Selecciona un Horario --</option>
                   <option v-for="horario in horarios" :key="horario.id" :value="horario.id" :disabled="horario.disponible === false">
                     {{ horario.dia_semana }} ({{ horario.hora_inicio }} - {{ horario.hora_fin }}) - {{ horario.aula?.nombre_aula || 'N/A' }}
                     <span v-if="horario.disponible === false"> - (Ocupado)</span>
                     <span v-else> - (Disponible)</span>
                   </option>
                 </select>
-                <p v-if="errores.horario_id" class="mt-1 text-sm text-red-600">
-                  {{ errores.horario_id[0] }}
+                <p v-if="errores.horario_ids" class="mt-1 text-sm text-red-600">
+                  {{ errores.horario_ids[0] }}
                 </p>
               </div>
 
@@ -119,7 +118,7 @@ defineProps({
 const formulario = reactive({
   grupo_id: '',
   materia_id: '',
-  horario_id: '',
+  horario_ids: [],
 });
 
 const errores = reactive({});

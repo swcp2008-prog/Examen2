@@ -38,30 +38,26 @@ class Docente extends Model
             return ['error' => 'Horario no encontrado'];
         }
 
-        // Obtener todos los horarios asignados a este docente
+        // Obtener todos los horarios asignados a este docente (ahora mediante pivot)
         $horariosDocente = $this->grupoMaterias()
-            ->with('horario')
+            ->with('horarios')
             ->get()
-            ->filter(fn($gm) => $gm->horario_id !== null && (!$grupoMateriaIdExcluir || $gm->id !== $grupoMateriaIdExcluir));
+            ->flatMap(fn($gm) => $gm->horarios)
+            ->filter(fn($h) => !$grupoMateriaIdExcluir || !$h->pivot || $h->pivot->grupo_materia_id !== $grupoMateriaIdExcluir);
 
-        foreach ($horariosDocente as $grupoMateria) {
-            $horarioExistente = $grupoMateria->horario;
-            
+        foreach ($horariosDocente as $horarioExistente) {
             // Comparar si están en el mismo día
             if ($horarioNuevo->dia_semana === $horarioExistente->dia_semana) {
-                // Convertir horas a minutos para comparación
                 $nuevoInicio = strtotime($horarioNuevo->hora_inicio);
                 $nuevoFin = strtotime($horarioNuevo->hora_fin);
                 $existenteInicio = strtotime($horarioExistente->hora_inicio);
                 $existenteFin = strtotime($horarioExistente->hora_fin);
 
-                // Verificar solapamiento
                 if (!($nuevoFin <= $existenteInicio || $nuevoInicio >= $existenteFin)) {
                     return [
                         'conflicto' => true,
                         'mensaje' => "Conflicto de horario: el docente ya tiene asignado un horario el {$horarioExistente->dia_semana} de {$horarioExistente->hora_inicio} a {$horarioExistente->hora_fin}",
                         'horarioExistente' => $horarioExistente,
-                        'grupoMateria' => $grupoMateria
                     ];
                 }
             }

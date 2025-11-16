@@ -38,12 +38,14 @@
                       {{ grupoMateria.materia?.nombre || '—' }}
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-600">
-                      <span v-if="grupoMateria.horario" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {{ grupoMateria.horario.dia_semana }} ({{ grupoMateria.horario.hora_inicio }} - {{ grupoMateria.horario.hora_fin }}) - {{ grupoMateria.horario.aula?.nombre_aula || 'N/A' }}
-                      </span>
-                      <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <div v-if="grupoMateria.horarios && grupoMateria.horarios.length">
+                        <span v-for="h in grupoMateria.horarios" :key="h.id" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                          {{ h.dia_semana }} ({{ h.hora_inicio }} - {{ h.hora_fin }}) - {{ h.aula?.nombre_aula || 'N/A' }}
+                        </span>
+                      </div>
+                      <div v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                         Sin horario
-                      </span>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button @click="abrirModalAsignarHorario(grupoMateria)" class="text-blue-600 hover:text-blue-900">🕐 Asignar Horario</button>
@@ -93,7 +95,7 @@
                       <select v-model="formulario.horario_id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         <option value="">-- Selecciona --</option>
                         <option v-for="horario in horarios" :key="horario.id" :value="horario.id"
-                          :disabled="horario.disponible === false && horario.id !== grupoMateriaSeleccionado?.horario_id">
+                          :disabled="horario.disponible === false && !(grupoMateriaSeleccionado?.horarios || []).map(h => h.id).includes(horario.id)">
                           {{ horario.dia_semana }} {{ horario.hora_inicio }} - {{ horario.hora_fin }} (Aula: {{ horario.aula?.nombre_aula || 'N/A' }})
                           <span v-if="horario.disponible === false"> - (Ocupado)</span>
                           <span v-else> - (Disponible)</span>
@@ -152,7 +154,7 @@ const formulario = reactive({
 
 const abrirModalAsignarHorario = (grupoMateria) => {
   grupoMateriaSeleccionado.value = grupoMateria;
-  formulario.horario_id = grupoMateria.horario_id || '';
+  formulario.horario_id = '';
   Object.keys(errores).forEach(key => delete errores[key]);
   mostrarModal.value = true;
 };
@@ -167,8 +169,14 @@ const asignarHorario = async () => {
   Object.keys(errores).forEach(key => delete errores[key]);
 
   try {
+    // Construir arreglo de horario_ids: mantener los existentes y añadir el nuevo (si no vacío)
+    const existentes = (grupoMateriaSeleccionado.value.horarios || []).map(h => h.id);
+    const nuevo = formulario.horario_id ? parseInt(formulario.horario_id) : null;
+    const horario_ids = existentes.slice();
+    if (nuevo && !horario_ids.includes(nuevo)) horario_ids.push(nuevo);
+
     await router.put(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
-      horario_id: formulario.horario_id,
+      horario_ids,
     }, {
       onError: (e) => {
         Object.assign(errores, e);

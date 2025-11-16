@@ -24,6 +24,12 @@ class GrupoMateria extends Model
         return $this->belongsTo(Horario::class);
     }
 
+    // Ahora una asignación puede tener varios horarios (teoría/práctica)
+    public function horarios()
+    {
+        return $this->belongsToMany(Horario::class, 'grupo_materia_horario', 'grupo_materia_id', 'horario_id')->withTimestamps();
+    }
+
     public function docentes()
     {
         return $this->belongsToMany(Docente::class, 'docente_grupo_materias', 'grupo_materia_id', 'docente_id');
