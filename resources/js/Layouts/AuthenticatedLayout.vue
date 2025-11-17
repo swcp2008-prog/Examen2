@@ -25,11 +25,8 @@
       </div>
     </nav>
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <!-- Banner Jetstream (success/danger) -->
-      <Banner />
-      
-      <!-- Error Banner (JSON 422 errors) -->
-      <ErrorBanner />
+      <!-- Notification Banner (success & danger) -->
+      <NotificationBanner />
       
       <slot />
     </main>
@@ -39,8 +36,7 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import Banner from '@/Components/Banner.vue';
-import ErrorBanner from '@/Components/ErrorBanner.vue';
+import NotificationBanner from '@/Components/NotificationBanner.vue';
 
 const page = usePage();
 

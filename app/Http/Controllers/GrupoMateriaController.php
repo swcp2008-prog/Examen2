@@ -257,7 +257,8 @@ class GrupoMateriaController extends Controller
         BitacoraService::flash('Grupo-Materia actualizado correctamente', 'success');
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'grupo_materia_id' => $grupoMateria->id, 'horario_ids' => $nuevosHorarios, 'count' => $count], 200);
+            $grupoMateria->load('horarios.aula');
+            return response()->json(['success' => true, 'grupo_materia_id' => $grupoMateria->id, 'horario_ids' => $nuevosHorarios, 'count' => $count, 'horarios' => $grupoMateria->horarios], 200);
         }
 
         return redirect()->route('grupo-materias.index');

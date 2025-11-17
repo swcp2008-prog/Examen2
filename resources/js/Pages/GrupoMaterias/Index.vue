@@ -246,24 +246,45 @@ const asignarHorario = async () => {
     // Combinar existentes + nuevos, manteniendo solo únicos
     const horario_ids = [...new Set([...existentes, ...nuevos])];
 
-    // Usar Inertia.router.put() para actualizar
-    router.put(
-      `/grupo-materias/${grupoMateriaSeleccionado.value.id}`,
-      { horario_ids },
-      {
-        onSuccess: () => {
-          erroresAsignacion.value = null;
-          cerrarModal();
-          cargando.value = false;
-        },
-        onError: (errors) => {
-          const errorMsg = errors.error || errors.message || 'Error al asignar horario';
-          erroresAsignacion.value = errorMsg;
-          flashError(errorMsg);
-          cargando.value = false;
-        },
-      }
-    );
+    // Usar fetch para capturar respuesta sin recargar
+    const response = await fetch(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+      },
+      body: JSON.stringify({ horario_ids }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Error — mostrar mensaje
+      const errorMsg = data.error || data.message || 'Error al asignar horario';
+      erroresAsignacion.value = errorMsg;
+      flashError(errorMsg);
+      cargando.value = false;
+      return;
+    }
+
+    // Éxito — mostrar mensaje de éxito sin recargar
+    erroresAsignacion.value = null;
+    const successMsg = 'Grupo-Materia actualizado correctamente';
+    if (!page.props.jetstream) page.props.jetstream = {};
+    page.props.jetstream.flash = {
+      banner: successMsg,
+      bannerStyle: 'success',
+    };
+    
+    // Actualizar la fila en tiempo real
+    const index = gruposMaterias.data.findIndex(g => g.id === grupoMateriaSeleccionado.value.id);
+    if (index !== -1) {
+      gruposMaterias.data[index].horarios = data.horarios || [];
+    }
+    
+    cerrarModal();
+    cargando.value = false;
   } catch (error) {
     flashError('Error al asignar horario: ' + error.message);
     cargando.value = false;
