@@ -180,6 +180,7 @@ const erroresAsignacion = ref(null);
 const intentoAsignar = ref(false);
 
 const abrirModalAsignarHorario = (grupoMateria) => {
+  console.log('Opening modal for grupoMateria:', grupoMateria);
   grupoMateriaSeleccionado.value = grupoMateria;
   formulario.horario_ids = [];
   Object.keys(errores).forEach(key => delete errores[key]);
@@ -247,7 +248,18 @@ const asignarHorario = async () => {
     const horario_ids = [...new Set([...existentes, ...nuevos])];
 
     // Usar fetch para capturar respuesta sin recargar
-    const response = await fetch(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
+    const grupoId = grupoMateriaSeleccionado.value?.id;
+    if (!grupoId) {
+      console.error('grupoMateriaSeleccionado.value:', grupoMateriaSeleccionado.value);
+      erroresAsignacion.value = 'Error: No se pudo obtener el ID del grupo-materia';
+      cargando.value = false;
+      return;
+    }
+    
+    const url = `/grupo-materias/${grupoId}`;
+    console.log('Sending PUT request to:', url, 'with data:', horario_ids);
+    
+    const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
