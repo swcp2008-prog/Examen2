@@ -246,33 +246,24 @@ const asignarHorario = async () => {
     // Combinar existentes + nuevos, manteniendo solo únicos
     const horario_ids = [...new Set([...existentes, ...nuevos])];
 
-    // Hacer PUT con respuesta JSON para capturar errores 422
-    const response = await fetch(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-      },
-      body: JSON.stringify({ horario_ids }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Error (422, 500, etc.) — mostrar mensaje como banner
-      const errorMsg = data.error || data.message || 'Error al asignar horario';
-      erroresAsignacion.value = errorMsg;
-      flashError(errorMsg);
-      cargando.value = false;
-      return;
-    }
-
-    // Éxito — cerrar modal y recargar datos
-    erroresAsignacion.value = null;
-    cerrarModal();
-    cargando.value = false;
-    router.reload();
+    // Usar Inertia.router.put() para actualizar
+    router.put(
+      `/grupo-materias/${grupoMateriaSeleccionado.value.id}`,
+      { horario_ids },
+      {
+        onSuccess: () => {
+          erroresAsignacion.value = null;
+          cerrarModal();
+          cargando.value = false;
+        },
+        onError: (errors) => {
+          const errorMsg = errors.error || errors.message || 'Error al asignar horario';
+          erroresAsignacion.value = errorMsg;
+          flashError(errorMsg);
+          cargando.value = false;
+        },
+      }
+    );
   } catch (error) {
     flashError('Error al asignar horario: ' + error.message);
     cargando.value = false;
