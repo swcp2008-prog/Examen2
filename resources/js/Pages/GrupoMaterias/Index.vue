@@ -256,33 +256,30 @@ const asignarHorario = async () => {
       return;
     }
     
-    // Use POST fallback endpoint directly to avoid PUT being blocked by some proxies/servers
+    // Use Inertia POST to call the fallback endpoint (better integration with Inertia)
     const fallbackUrl = `/grupo-materias/${grupoId}/update-horarios`;
-    console.log('Sending POST to fallback URL:', fallbackUrl, 'with data:', horario_ids);
-    const response = await fetch(fallbackUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+    console.log('Sending Inertia POST to:', fallbackUrl, 'with data:', horario_ids);
+
+    router.post(fallbackUrl, { horario_ids }, {
+      onSuccess: (page) => {
+        // Inertia updated page.props (including jetstream.flash) — reflect success locally
+        erroresAsignacion.value = null;
+        // Update the local gruposMaterias data if the response included updated horarios via page props
+        const updated = page.props.gruposMaterias?.data || [];
+        const idx = updated.findIndex(g => g.id === grupoId);
+        if (idx !== -1) {
+          gruposMaterias.data[idx].horarios = updated[idx].horarios || gruposMaterias.data[idx].horarios;
+        }
+        cerrarModal();
+        cargando.value = false;
       },
-      body: JSON.stringify({ horario_ids }),
+      onError: (errors) => {
+        const errorMsg = errors.error || errors.message || 'Error al asignar horario';
+        erroresAsignacion.value = errorMsg;
+        flashError(errorMsg);
+        cargando.value = false;
+      }
     });
-
-    let data = {};
-    try {
-      data = await response.json();
-    } catch (e) {
-      // ignore parse errors
-    }
-
-    if (!response.ok) {
-      const errorMsg = data.error || data.message || `Error al asignar horario (HTTP ${response.status})`;
-      erroresAsignacion.value = errorMsg;
-      flashError(errorMsg);
-      cargando.value = false;
-      return;
-    }
 
     // Éxito — mostrar mensaje de éxito sin recargar
     erroresAsignacion.value = null;
