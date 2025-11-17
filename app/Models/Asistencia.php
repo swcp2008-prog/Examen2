@@ -8,7 +8,12 @@ class Asistencia extends Model
 {
     protected $table = 'asistencias';
     protected $fillable = ['grupo_materia_id', 'docente_id', 'fecha', 'hora_entrada', 'hora_salida', 'estado', 'observaciones'];
-    protected $dates = ['fecha'];
+    
+    protected $casts = [
+        'fecha' => 'datetime',
+        'hora_entrada' => 'string',
+        'hora_salida' => 'string',
+    ];
 
     public function grupoMateria()
     {

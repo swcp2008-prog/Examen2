@@ -44,8 +44,9 @@ class ReporteController extends Controller
             'titulo' => 'Reporte de Asistencia',
             'fecha_generacion' => now()->format('d/m/Y H:i'),
             'data' => $asistencias->map(function ($asistencia) {
+                $fecha = is_string($asistencia->fecha) ? Carbon::parse($asistencia->fecha) : $asistencia->fecha;
                 return [
-                    'fecha' => $asistencia->fecha->format('d/m/Y'),
+                    'fecha' => $fecha->format('d/m/Y'),
                     'docente' => $asistencia->docente->user->nombre . ' ' . $asistencia->docente->user->apellido,
                     'grupo' => $asistencia->grupoMateria->grupo->nombre,
                     'materia' => $asistencia->grupoMateria->materia->nombre,
@@ -86,7 +87,8 @@ class ReporteController extends Controller
         $csv = "Fecha,Docente,Grupo,Materia,Estado,Observaciones\n";
         foreach ($asistencias as $asistencia) {
             $docente_nombre = $asistencia->docente->user->nombre . ' ' . $asistencia->docente->user->apellido;
-            $csv .= "{$asistencia->fecha->format('d/m/Y')},\"{$docente_nombre}\",\"{$asistencia->grupoMateria->grupo->nombre}\",\"{$asistencia->grupoMateria->materia->nombre}\",{$asistencia->estado},\"{$asistencia->observaciones}\"\n";
+            $fecha = is_string($asistencia->fecha) ? Carbon::parse($asistencia->fecha) : $asistencia->fecha;
+            $csv .= "{$fecha->format('d/m/Y')},\"{$docente_nombre}\",\"{$asistencia->grupoMateria->grupo->nombre}\",\"{$asistencia->grupoMateria->materia->nombre}\",{$asistencia->estado},\"{$asistencia->observaciones}\"\n";
         }
 
         return response($csv)

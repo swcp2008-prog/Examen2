@@ -11,15 +11,20 @@
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6 text-gray-900">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label class="block text-sm font-medium mb-1">Docente:</label>
-                <select v-model="filtros.docente_id" class="w-full px-3 py-2 border rounded">
-                  <option value="">Selecciona docente</option>
-                  <option v-for="docente in docentes" :key="docente.id" :value="docente.id">
-                    {{ docente.user.nombre }}
-                  </option>
-                </select>
-              </div>
+                      <div>
+                        <label class="block text-sm font-medium mb-1">Docente:</label>
+                        <div v-if="!isDocente">
+                          <select v-model="filtros.docente_id" class="w-full px-3 py-2 border rounded">
+                            <option value="">Selecciona docente</option>
+                            <option v-for="docente in docentes" :key="docente.id" :value="docente.id">
+                              {{ docente.user.nombre }}
+                            </option>
+                          </select>
+                        </div>
+                        <div v-else>
+                          <p class="py-2">{{ docenteNombre }}</p>
+                        </div>
+                      </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Grupo:</label>
                 <select v-model="filtros.grupo_id" class="w-full px-3 py-2 border rounded">
@@ -33,7 +38,7 @@
 
             <button 
               @click="consultar" 
-              :disabled="cargando || !filtros.docente_id || !filtros.grupo_id"
+              :disabled="cargando || (!isDocente && !filtros.docente_id) || !filtros.grupo_id"
               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
             >
               {{ cargando ? "Buscando..." : "🔍 Buscar" }}
@@ -74,6 +79,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineProps({
@@ -81,11 +87,16 @@ defineProps({
   grupos: Array,
 });
 
+const page = usePage();
+const currentUser = page.props.user || null;
+const isDocente = !!(currentUser && currentUser.docente_id);
+const docenteNombre = isDocente ? (page.props.user?.nombre + ' ' + page.props.user?.apellido) : '';
+
 const cargando = ref(false);
 const consultado = ref(false);
 const asistencias = ref([]);
-const filtros = reactive({
-  docente_id: '',
+  const filtros = reactive({
+  docente_id: isDocente ? currentUser.docente_id : '',
   grupo_id: '',
 });
 
@@ -93,7 +104,8 @@ const consultar = async () => {
   cargando.value = true;
   consultado.value = true;
   try {
-    const response = await fetch(`/asistencias/por-docente-grupo?docente_id=${filtros.docente_id}&grupo_id=${filtros.grupo_id}`);
+    const docenteParam = filtros.docente_id ? `docente_id=${filtros.docente_id}&` : '';
+    const response = await fetch(`/asistencias/por-docente-grupo?${docenteParam}grupo_id=${filtros.grupo_id}`);
     const data = await response.json();
     asistencias.value = data;
   } catch (error) {

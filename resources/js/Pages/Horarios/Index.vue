@@ -8,9 +8,11 @@
           <div class="p-6 text-gray-900">
             <div class="flex justify-between items-center mb-6">
               <h1 class="text-2xl font-bold">Gestión de Horarios</h1>
-              <Link href="/horarios/create" class="bg-indigo-600 text-white px-4 py-2 rounded-md">
-                Crear Horario
-              </Link>
+              <template v-if="user?.can_create_horarios">
+                <Link href="/horarios/create" class="bg-indigo-600 text-white px-4 py-2 rounded-md">
+                  Crear Horario
+                </Link>
+              </template>
             </div>
 
             <table class="min-w-full bg-white border border-gray-300">
@@ -32,8 +34,8 @@
                   <td class="px-6 py-4">{{ horario.hora_fin }}</td>
                   <td class="px-6 py-4">{{ horario.estado }}</td>
                   <td class="px-6 py-4">
-                    <Link :href="`/horarios/${horario.id}/edit`" class="text-indigo-600">Editar</Link>
-                    <button @click="deleteHorario(horario.id)" class="ml-4 text-red-600">Eliminar</button>
+                    <Link v-if="user?.can_edit_horarios" :href="`/horarios/${horario.id}/edit`" class="text-indigo-600">Editar</Link>
+                    <button v-if="user?.can_delete_horarios" @click="deleteHorario(horario.id)" class="ml-4 text-red-600">Eliminar</button>
                   </td>
                 </tr>
               </tbody>
@@ -47,7 +49,10 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const user = page.props.user || null;
 
 defineProps({
   horarios: Object,

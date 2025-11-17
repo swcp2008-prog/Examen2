@@ -15,6 +15,12 @@ class HorarioController extends Controller
     {
         $this->authorize('view', 'horarios');
         
+        // Docentes no deben ver la gestión general de horarios; solo sus propios a través de /mi-horario
+        $user = auth()->user();
+        if ($user && $user->docente && !in_array(strtolower($user->rol?->nombre ?? ''), ['admin', 'coordinador'])) {
+            return redirect()->route('mi-horario');
+        }
+
         $horarios = Horario::with('aula')
             ->paginate(15);
 

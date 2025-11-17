@@ -1,6 +1,9 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const user = page.props.user || null;
 </script>
 
 <template>
@@ -22,7 +25,7 @@ import { Link } from '@inertiajs/vue3';
                 <!-- Menú Principal -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Gestión de Docentes -->
-                    <Link href="/docentes" class="block group">
+                    <Link v-if="user?.can_view_usuarios" href="/docentes" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">👨‍🏫</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600">Docentes</h3>
@@ -32,7 +35,7 @@ import { Link } from '@inertiajs/vue3';
                     </Link>
 
                     <!-- Gestión de Aulas -->
-                    <Link href="/aulas" class="block group">
+                    <Link v-if="user?.can_view_aulas" href="/aulas" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">🏢</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600">Aulas</h3>
@@ -42,7 +45,7 @@ import { Link } from '@inertiajs/vue3';
                     </Link>
 
                     <!-- Horarios -->
-                    <Link href="/docentes" class="block group">
+                    <Link v-if="user?.can_view_horarios" href="/horarios" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">📅</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600">Horarios</h3>
@@ -52,7 +55,7 @@ import { Link } from '@inertiajs/vue3';
                     </Link>
 
                     <!-- Grupo-Materias -->
-                    <Link href="/grupo-materias" class="block group">
+                    <Link v-if="user?.can_view_grupos" href="/grupo-materias" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">📚</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-600">Grupo-Materias</h3>
@@ -62,7 +65,7 @@ import { Link } from '@inertiajs/vue3';
                     </Link>
 
                     <!-- Asistencias -->
-                    <Link href="/asistencias" class="block group">
+                    <Link v-if="user?.can_view_asistencias" href="/asistencias" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">✅</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600">Asistencias</h3>
@@ -72,7 +75,7 @@ import { Link } from '@inertiajs/vue3';
                     </Link>
 
                     <!-- Aulas Disponibles -->
-                    <Link href="/aulas-disponibles" class="block group">
+                    <Link v-if="user?.can_view_aulas" href="/aulas-disponibles" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">🔍</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600">Aulas Disponibles</h3>
@@ -82,7 +85,7 @@ import { Link } from '@inertiajs/vue3';
                     </Link>
 
                     <!-- Reportes -->
-                    <Link href="/reportes" class="block group">
+                    <Link v-if="user?.can_generate_reportes" href="/reportes" class="block group">
                         <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg hover:shadow-xl transition-shadow p-6 cursor-pointer h-full">
                             <div class="text-4xl mb-4">📊</div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-600">Reportes</h3>

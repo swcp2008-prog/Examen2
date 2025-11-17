@@ -37,14 +37,33 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            'auth.user' => fn () => $request->user() ? $request->user()->load('rol') : null,
-            'user' => fn () => $request->user() ? [
-                'id' => $request->user()->id,
-                'nombre' => $request->user()->nombre,
-                'apellido' => $request->user()->apellido,
-                'email' => $request->user()->email,
-                'rol' => $request->user()->rol?->nombre ?? 'Sin rol',
-            ] : null,
+            'auth.user' => fn () => $request->user() ? $request->user()->load(['rol', 'docente']) : null,
+            'user' => fn () => $request->user() ? (function () use ($request) {
+                $u = $request->user();
+                // map common menu permissions using the defined gates (crear/view/edit/...)
+                return [
+                    'id' => $u->id,
+                    'nombre' => $u->nombre,
+                    'apellido' => $u->apellido,
+                    'email' => $u->email,
+                    'rol' => $u->rol?->nombre ?? 'Sin rol',
+                    'docente_id' => $u->docente?->id ?? null,
+                    'is_docente' => strtolower($u->rol?->nombre ?? '') === 'docente',
+                    'can_view_usuarios' => $u->can('view', 'usuarios'),
+                    'can_view_roles' => $u->can('view', 'roles'),
+                    'can_view_aulas' => $u->can('view', 'aulas'),
+                    'can_view_horarios' => $u->can('view', 'horarios'),
+                    'can_create_horarios' => $u->can('create', 'horarios'),
+                    'can_edit_horarios' => $u->can('edit', 'horarios'),
+                    'can_delete_horarios' => $u->can('delete', 'horarios'),
+                    'can_generate_horarios' => $u->can('create', 'horarios'),
+                    'can_view_materias' => $u->can('view', 'materias'),
+                    'can_view_grupos' => $u->can('view', 'grupos'),
+                    'can_view_asistencias' => $u->can('view', 'asistencia'),
+                    'can_view_bitacora' => $u->can('view', 'bitacora'),
+                    'can_generate_reportes' => $u->can('generar', 'reportes'),
+                ];
+            })() : null,
             'jetstream' => [
                 'flash' => $request->session()->get('jetstream.flash'),
             ],

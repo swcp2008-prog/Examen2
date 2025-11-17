@@ -26,17 +26,23 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700">Docente</label>
-                <select 
-                  v-model="form.docente_id"
-                  required
-                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-                >
-                  <option value="">Seleccione un docente</option>
-                  <option v-for="docente in docentes" :key="docente.id" :value="docente.id">
-                    {{ docente.user?.nombre }} {{ docente.user?.apellido }}
-                  </option>
-                </select>
-                <p v-if="form.errors.docente_id" class="text-red-600 text-sm mt-1">{{ form.errors.docente_id }}</p>
+                <div v-if="!isDocente">
+                  <select 
+                    v-model="form.docente_id"
+                    required
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                  >
+                    <option value="">Seleccione un docente</option>
+                    <option v-for="docente in docentes" :key="docente.id" :value="docente.id">
+                      {{ docente.user?.nombre }} {{ docente.user?.apellido }}
+                    </option>
+                  </select>
+                  <p v-if="form.errors.docente_id" class="text-red-600 text-sm mt-1">{{ form.errors.docente_id }}</p>
+                </div>
+                <div v-else>
+                  <input type="hidden" :value="form.docente_id" />
+                  <p class="mt-2 text-sm text-gray-700">Docente: <strong>{{ docentes[0]?.user?.nombre }} {{ docentes[0]?.user?.apellido }}</strong></p>
+                </div>
               </div>
 
               <div>
@@ -116,22 +122,32 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 
 defineProps({
   grupoMaterias: Array,
   docentes: Array,
 });
 
+const page = usePage();
+const currentUser = page.props.user || null;
+const isDocente = !!(currentUser && currentUser.docente_id);
+const currentDocenteId = currentUser?.docente_id ?? '';
+
 const form = useForm({
   grupo_materia_id: '',
-  docente_id: '',
+  docente_id: isDocente ? currentDocenteId : '',
   fecha: new Date().toISOString().split('T')[0],
   hora_entrada: '',
   hora_salida: '',
   estado: 'presente',
   observaciones: '',
 });
+
+// If the user is a docente, ensure docente_id is always set
+if (isDocente) {
+  form.docente_id = currentDocenteId;
+}
 
 const submit = () => {
   form.post('/asistencias');

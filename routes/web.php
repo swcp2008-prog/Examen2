@@ -86,6 +86,15 @@ Route::middleware([
     Route::get('/docentes/{docente}/horarios', [DocenteController::class, 'horarios'])->name('docentes.horarios');
     Route::post('/docentes/generar-horarios', [DocenteController::class, 'generarHorarios'])->name('docentes.generar-horarios');
 
+    // Ruta cómoda para que un docente vea su propio horario
+    Route::get('/mi-horario', function () {
+        $user = auth()->user();
+        if (!$user || !$user->docente) {
+            return redirect('/dashboard');
+        }
+        return redirect()->route('docentes.horarios', ['docente' => $user->docente->id]);
+    })->name('mi-horario');
+
     // Rutas de Asistencia (CU14, CU17)
     Route::resource('asistencias', AsistenciaController::class)->except('show');
     Route::get('/asistencias-consultar', function () {

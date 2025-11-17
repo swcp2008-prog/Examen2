@@ -16,9 +16,16 @@ class AsistenciaController extends Controller
     {
         $this->authorize('view', 'asistencia');
         
-        $asistencias = Asistencia::with(['grupoMateria.grupo', 'docente.user'])
-            ->latest()
-            ->paginate(20);
+        $user = request()->user();
+
+        $query = Asistencia::with(['grupoMateria.grupo', 'docente.user'])->latest();
+
+        // Si es docente y no tiene permisos amplios, mostrar sólo sus asistencias
+        if ($user && $user->docente && !in_array(strtolower($user->rol?->nombre ?? ''), ['admin','coordinador'])) {
+            $query->where('docente_id', $user->docente->id);
+        }
+
+        $asistencias = $query->paginate(20);
 
         return Inertia::render('Asistencias/Index', [
             'asistencias' => $asistencias,
@@ -28,10 +35,19 @@ class AsistenciaController extends Controller
     public function create()
     {
         $this->authorize('crear', 'asistencia');
-        
-        $grupoMaterias = GrupoMateria::with('grupo', 'materia')->get();
-        $docentes = Docente::with('user')->get();
-        
+        $user = request()->user();
+
+        if ($user && $user->docente && !in_array(strtolower($user->rol?->nombre ?? ''), ['admin','coordinador'])) {
+            // Docente: limitar opciones a sí mismo y a sus grupo-materias
+            $docentes = Docente::with('user')->where('id', $user->docente->id)->get();
+            $grupoMaterias = GrupoMateria::whereHas('docentes', function ($q) use ($user) {
+                $q->where('docente_id', $user->docente->id);
+            })->with('grupo', 'materia')->get();
+        } else {
+            $grupoMaterias = GrupoMateria::with('grupo', 'materia')->get();
+            $docentes = Docente::with('user')->get();
+        }
+
         return Inertia::render('Asistencias/Create', [
             'grupoMaterias' => $grupoMaterias,
             'docentes' => $docentes,
@@ -51,6 +67,13 @@ class AsistenciaController extends Controller
             'estado' => 'required|in:presente,ausente,retardo,justificada',
             'observaciones' => 'nullable|string',
         ]);
+
+        $user = $request->user();
+
+        // Si es docente sin permisos amplios, forzar docente_id al suyo
+        if ($user && $user->docente && !in_array(strtolower($user->rol?->nombre ?? ''), ['admin','coordinador'])) {
+            $validated['docente_id'] = $user->docente->id;
+        }
 
         $asistencia = Asistencia::create($validated);
 
@@ -77,6 +100,12 @@ class AsistenciaController extends Controller
             'estado' => 'required|in:presente,ausente,retardo,justificada',
             'observaciones' => 'nullable|string',
         ]);
+        $user = $request->user();
+
+        // Si es docente sin permisos amplios, forzar docente_id al suyo
+        if ($user && $user->docente && !in_array(strtolower($user->rol?->nombre ?? ''), ['admin','coordinador'])) {
+            $validated['docente_id'] = $user->docente->id;
+        }
 
         // Crear un único registro de asistencia del docente
         $asistencia = Asistencia::updateOrCreate(
@@ -104,7 +133,13 @@ class AsistenciaController extends Controller
     {
         $this->authorize('view', 'asistencia');
         
+        $user = $request->user();
         $docente = $request->input('docente_id');
+
+        // Si es docente sin permisos amplios, forzar consulta a su propio id
+        if ($user && $user->docente && !in_array(strtolower($user->rol?->nombre ?? ''), ['admin','coordinador'])) {
+            $docente = $user->docente->id;
+        }
         $grupo = $request->input('grupo_id');
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
