@@ -264,6 +264,17 @@ class GrupoMateriaController extends Controller
         return redirect()->route('grupo-materias.index');
     }
 
+    /**
+     * Fallback update endpoint that accepts POST and forwards to update().
+     * Some clients/proxies block PUT; this wrapper allows updating via POST.
+     */
+    public function updateViaPost(Request $request, GrupoMateria $grupoMateria)
+    {
+        // Tell the request it's a PUT so update() behaves the same
+        $request->setMethod('PUT');
+        return $this->update($request, $grupoMateria);
+    }
+
     public function destroy(GrupoMateria $grupoMateria)
     {
         $this->authorize('delete', 'grupos');

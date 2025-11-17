@@ -70,6 +70,8 @@ Route::middleware([
     Route::get('/grupo-materias/{grupoMateria}/edit', [GrupoMateriaController::class, 'edit'])->name('grupo-materias.edit');
     Route::put('/grupo-materias/{grupoMateria}', [GrupoMateriaController::class, 'update'])->name('grupo-materias.update');
     Route::delete('/grupo-materias/{grupoMateria}', [GrupoMateriaController::class, 'destroy'])->name('grupo-materias.destroy');
+    // Fallback route: some clients or proxies may not allow PUT; accept POST and forward to update
+    Route::post('/grupo-materias/{grupoMateria}/update-horarios', [GrupoMateriaController::class, 'updateViaPost'])->name('grupo-materias.update-via-post');
     Route::get('/grupo-materias/{grupoMateria}/horarios-disponibles', [GrupoMateriaController::class, 'getHorariosDisponibles'])->name('grupo-materias.horarios-disponibles');
 
     // Rutas de Docentes (CU12, CU13, CU15)

@@ -259,7 +259,7 @@ const asignarHorario = async () => {
     const url = `/grupo-materias/${grupoId}`;
     console.log('Sending PUT request to:', url, 'with data:', horario_ids);
     
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -269,11 +269,36 @@ const asignarHorario = async () => {
       body: JSON.stringify({ horario_ids }),
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = {};
+    }
+
+    // If server responds that PUT is not allowed, try fallback POST route
+    if (response.status === 405 || (data?.message && data.message.includes('PUT method is not supported'))) {
+      console.warn('PUT not allowed, retrying with POST fallback');
+      const fallbackUrl = `/grupo-materias/${grupoId}/update-horarios`;
+      console.log('Sending POST fallback to:', fallbackUrl);
+      response = await fetch(fallbackUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        },
+        body: JSON.stringify({ horario_ids }),
+      });
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = {};
+      }
+    }
 
     if (!response.ok) {
-      // Error — mostrar mensaje
-      const errorMsg = data.error || data.message || 'Error al asignar horario';
+      const errorMsg = data.error || data.message || `Error al asignar horario (HTTP ${response.status})`;
       erroresAsignacion.value = errorMsg;
       flashError(errorMsg);
       cargando.value = false;
