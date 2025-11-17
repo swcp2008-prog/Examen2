@@ -29,10 +29,11 @@ class BitacoraService
 
     /**
      * Flash a Jetstream-style banner message into session for UI display.
+     * Uses Session::put() instead of flash() so it's available immediately in the current response.
      */
     public static function flash(string $mensaje, string $estilo = 'success'): void
     {
-        Session::flash('jetstream.flash', [
+        Session::put('jetstream.flash', [
             'banner' => $mensaje,
             'bannerStyle' => $estilo,
         ]);

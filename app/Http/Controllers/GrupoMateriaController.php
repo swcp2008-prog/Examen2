@@ -255,6 +255,7 @@ class GrupoMateriaController extends Controller
 
         // Flash UI message
         BitacoraService::flash('✅ Horarios actualizado exitosamente', 'success');
+        Log::info('[GrupoMateriaController] Flash set after update', ['flash' => session('jetstream.flash')]);
 
         if ($request->wantsJson()) {
             $grupoMateria->load('horarios.aula');

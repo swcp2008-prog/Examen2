@@ -45,6 +45,9 @@ class HandleInertiaRequests extends Middleware
                 'email' => $request->user()->email,
                 'rol' => $request->user()->rol?->nombre ?? 'Sin rol',
             ] : null,
+            'jetstream' => [
+                'flash' => $request->session()->get('jetstream.flash'),
+            ],
         ];
     }
 }
