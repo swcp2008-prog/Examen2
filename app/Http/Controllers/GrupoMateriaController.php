@@ -255,7 +255,6 @@ class GrupoMateriaController extends Controller
 
         // Flash UI message
         BitacoraService::flash('✅ Horarios actualizado exitosamente', 'success');
-        Log::info('[GrupoMateriaController] Flash set after update', ['flash' => session('jetstream.flash')]);
 
         if ($request->wantsJson()) {
             $grupoMateria->load('horarios.aula');
@@ -303,11 +302,13 @@ class GrupoMateriaController extends Controller
             $horario->disponible = !in_array($horario->id, $horariosUsados);
         }
 
-        // Return Inertia page render; the middleware HandleInertiaFlash will include the session flash
+        // Return Inertia page render with explicit flash
+        $flash = session('jetstream.flash');
+        
         return Inertia::render('GrupoMaterias/Index', [
             'gruposMaterias' => $gruposMaterias,
             'horarios' => $horarios,
-        ]);
+        ])->with('jetstream', ['flash' => $flash]);
     }
 
     public function destroy(GrupoMateria $grupoMateria)

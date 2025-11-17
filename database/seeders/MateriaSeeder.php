@@ -13,9 +13,9 @@ class MateriaSeeder extends Seeder
     public function run(): void
     {
         $materias = [
-            ['codigo' => 'BD-101', 'nombre' => 'Base de Datos', 'descripcion' => 'Diseño y gestión de bases de datos relacionales', 'horas_semanales' => 4, 'estado' => 'activa'],
-            ['codigo' => 'INFO-101', 'nombre' => 'Introduccion a la Informatica', 'descripcion' => 'Fundamentos de informática y computación', 'horas_semanales' => 3, 'estado' => 'activa'],
-            ['codigo' => 'CALC-101', 'nombre' => 'Calculo1', 'descripcion' => 'Cálculo diferencial e integral', 'horas_semanales' => 5, 'estado' => 'activa'],
+            ['codigo' => 'BD-101', 'nombre' => 'Base de Datos', 'descripcion' => 'Diseño y gestión de bases de datos relacionales', 'estado' => 'activa'],
+            ['codigo' => 'INFO-101', 'nombre' => 'Introduccion a la Informatica', 'descripcion' => 'Fundamentos de informática y computación', 'estado' => 'activa'],
+            ['codigo' => 'CALC-101', 'nombre' => 'Calculo1', 'descripcion' => 'Cálculo diferencial e integral', 'estado' => 'activa'],
         ];
 
         foreach ($materias as $materia) {

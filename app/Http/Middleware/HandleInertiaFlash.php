@@ -17,14 +17,10 @@ class HandleInertiaFlash
      */
     public function handle(Request $request, Closure $next)
     {
-        // Get current flash from session
-        $flash = session('jetstream.flash');
-        \Log::info('[HandleInertiaFlash] Flash from session:', ['flash' => $flash]);
-        
         // Share the jetstream flash with all Inertia responses
         Inertia::share([
             'jetstream' => [
-                'flash' => $flash,
+                'flash' => session('jetstream.flash'),
             ],
         ]);
 

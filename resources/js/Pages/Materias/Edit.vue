@@ -42,19 +42,6 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">Horas Semanales</label>
-                <input 
-                  v-model="form.horas_semanales" 
-                  type="number"
-                  required
-                  min="1"
-                  max="20"
-                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-                />
-                <p v-if="form.errors.horas_semanales" class="text-red-600 text-sm mt-1">{{ form.errors.horas_semanales }}</p>
-              </div>
-
-              <div>
                 <label class="block text-sm font-medium text-gray-700">Estado</label>
                 <select 
                   v-model="form.estado"
@@ -98,7 +85,6 @@ const form = useForm({
   nombre: '',
   codigo: '',
   descripcion: '',
-  horas_semanales: '',
   estado: 'activa',
 });
 
@@ -106,7 +92,6 @@ form.defaults({
   nombre: props.materia.nombre,
   codigo: props.materia.codigo,
   descripcion: props.materia.descripcion,
-  horas_semanales: props.materia.horas_semanales,
   estado: props.materia.estado,
 });
 

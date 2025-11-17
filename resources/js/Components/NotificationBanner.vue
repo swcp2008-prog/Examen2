@@ -17,10 +17,8 @@ const messageType = ref('success'); // 'success' or 'danger'
 // Watch page.props.jetstream.flash for notifications
 watchEffect(() => {
   const flash = page.props.jetstream?.flash;
-  console.log('[NotificationBanner] flash detected:', flash); // DEBUG
   
   if (flash?.banner) {
-    console.log('[NotificationBanner] showing flash:', flash.banner); // DEBUG
     displayMessage.value = flash.banner;
     messageType.value = flash.bannerStyle === 'danger' ? 'danger' : 'success';
     show.value = true;
