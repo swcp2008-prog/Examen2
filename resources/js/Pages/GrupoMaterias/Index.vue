@@ -262,14 +262,8 @@ const asignarHorario = async () => {
 
     router.post(fallbackUrl, { horario_ids }, {
       onSuccess: (page) => {
-        // Inertia updated page.props (including jetstream.flash) — reflect success locally
+        // Inertia updated page.props (including jetstream.flash). Let Inertia re-render the table.
         erroresAsignacion.value = null;
-        // Update the local gruposMaterias data if the response included updated horarios via page props
-        const updated = page.props.gruposMaterias?.data || [];
-        const idx = updated.findIndex(g => g.id === grupoId);
-        if (idx !== -1) {
-          gruposMaterias.data[idx].horarios = updated[idx].horarios || gruposMaterias.data[idx].horarios;
-        }
         cerrarModal();
         cargando.value = false;
       },
