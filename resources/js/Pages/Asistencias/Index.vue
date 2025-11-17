@@ -34,7 +34,7 @@
               </thead>
               <tbody>
                 <tr v-for="asistencia in asistencias.data" :key="asistencia.id" class="border-b">
-                  <td class="px-6 py-4">{{ asistencia.fecha }}</td>
+                  <td class="px-6 py-4">{{ formatDate(asistencia.fecha) }}</td>
                   <td class="px-6 py-4">{{ asistencia.docente?.user?.nombre }} {{ asistencia.docente?.user?.apellido }}</td>
                   <td class="px-6 py-4">{{ asistencia.grupo_materia?.grupo?.nombre }}</td>
                   <td class="px-6 py-4">
@@ -62,6 +62,15 @@ import { Head, Link, router } from '@inertiajs/vue3';
 defineProps({
   asistencias: Object,
 });
+
+const formatDate = (fecha) => {
+  if (!fecha) return '-';
+  const date = new Date(fecha);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 const getEstadoClass = (estado) => {
   const clases = {

@@ -7,6 +7,7 @@ use App\Models\Bitacora;
 use App\Models\Docente;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReporteController extends Controller
 {
@@ -37,24 +38,26 @@ class ReporteController extends Controller
 
         $asistencias = $query->with(['grupoMateria', 'docente'])->get();
 
-        // Para generar PDF necesitarás instalar una librería como DomPDF o mPDF
-        // Por ahora, retornaremos JSON y el frontend lo procesará
-        
-        return response()->json([
+        // Preparar datos para el PDF
+        $data = $asistencias->map(function ($asistencia) {
+            $fecha = is_string($asistencia->fecha) ? Carbon::parse($asistencia->fecha) : $asistencia->fecha;
+            return [
+                'fecha' => $fecha->format('d/m/Y'),
+                'docente' => $asistencia->docente->user->nombre . ' ' . $asistencia->docente->user->apellido,
+                'grupo' => $asistencia->grupoMateria->grupo->nombre,
+                'materia' => $asistencia->grupoMateria->materia->nombre,
+                'estado' => ucfirst($asistencia->estado),
+                'observaciones' => $asistencia->observaciones,
+            ];
+        })->toArray();
+
+        $pdf = Pdf::loadView('reportes.asistencia_pdf', [
             'titulo' => 'Reporte de Asistencia',
             'fecha_generacion' => now()->format('d/m/Y H:i'),
-            'data' => $asistencias->map(function ($asistencia) {
-                $fecha = is_string($asistencia->fecha) ? Carbon::parse($asistencia->fecha) : $asistencia->fecha;
-                return [
-                    'fecha' => $fecha->format('d/m/Y'),
-                    'docente' => $asistencia->docente->user->nombre . ' ' . $asistencia->docente->user->apellido,
-                    'grupo' => $asistencia->grupoMateria->grupo->nombre,
-                    'materia' => $asistencia->grupoMateria->materia->nombre,
-                    'estado' => ucfirst($asistencia->estado),
-                    'observaciones' => $asistencia->observaciones,
-                ];
-            }),
+            'data' => $data,
         ]);
+
+        return $pdf->download('reporte_asistencia_' . now()->format('Y-m-d_H-i-s') . '.pdf');
     }
 
     public function asistenciaExcel(Request $request)
@@ -124,19 +127,24 @@ class ReporteController extends Controller
 
         $bitacoras = $query->latest()->get();
 
-        return response()->json([
+        // Preparar datos para el PDF
+        $data = $bitacoras->map(function ($bitacora) {
+            return [
+                'fecha' => $bitacora->fecha_hora->format('d/m/Y H:i:s'),
+                'usuario' => $bitacora->user->nombre . ' ' . $bitacora->user->apellido,
+                'accion' => $bitacora->accion,
+                'tabla' => $bitacora->tabla_afectada,
+                'ip' => $bitacora->ip_origen,
+            ];
+        })->toArray();
+
+        $pdf = Pdf::loadView('reportes.bitacora_pdf', [
             'titulo' => 'Reporte de Bitácora',
             'fecha_generacion' => now()->format('d/m/Y H:i'),
-            'data' => $bitacoras->map(function ($bitacora) {
-                return [
-                    'fecha' => $bitacora->fecha_hora->format('d/m/Y H:i:s'),
-                    'usuario' => $bitacora->user->nombre . ' ' . $bitacora->user->apellido,
-                    'accion' => $bitacora->accion,
-                    'tabla' => $bitacora->tabla_afectada,
-                    'ip' => $bitacora->ip_origen,
-                ];
-            }),
+            'data' => $data,
         ]);
+
+        return $pdf->download('reporte_bitacora_' . now()->format('Y-m-d_H-i-s') . '.pdf');
     }
 
     public function bitacoraExcel(Request $request)
