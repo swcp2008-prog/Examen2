@@ -90,20 +90,19 @@
                     </h3>
                     <div class="mt-4">
                       <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Selecciona un horario:
+                        Selecciona uno o más horarios:
                       </label>
                       <div v-if="cargandoHorarios" class="text-gray-600 text-sm italic py-2">
                         Cargando horarios disponibles...
                       </div>
-                      <select v-model="formulario.horario_id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">-- Selecciona un horario --</option>
+                      <select v-model="formulario.horario_ids" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" multiple>
                         <optgroup label="✅ Disponibles">
-                          <option v-for="h in horariosDisponiblesParaModal.filter(h => h.disponible)" :key="h.id" :value="h.id">
+                          <option v-for="h in horariosDisponiblesParaModal.filter(h => h.disponible)" :key="h.id" :value="`${h.id}`">
                             {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} (Aula: {{ h.aula?.nombre_aula || 'N/A' }})
                           </option>
                         </optgroup>
                         <optgroup label="🔒 No disponibles">
-                          <option v-for="h in horariosDisponiblesParaModal.filter(h => !h.disponible)" :key="h.id" :value="h.id" disabled>
+                          <option v-for="h in horariosDisponiblesParaModal.filter(h => !h.disponible)" :key="h.id" :value="`${h.id}`" disabled>
                             {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} - {{ h.razon }}
                           </option>
                         </optgroup>
@@ -123,7 +122,7 @@
                       <div v-if="erroresAsignacion" class="text-red-600 text-sm mt-1">
                         {{ erroresAsignacion }}
                       </div>
-                      <div v-if="intentoAsignar && !formulario.horario_id" class="text-red-600 text-sm mt-1">
+                      <div v-if="intentoAsignar && formulario.horario_ids.length === 0" class="text-red-600 text-sm mt-1">
                         Por favor, selecciona al menos un horario.
                       </div>
                     </div>
@@ -172,7 +171,7 @@ const cargando = ref(false);
 const errores = reactive({});
 
 const formulario = reactive({
-  horario_id: '',
+  horario_ids: [],
 });
 
 const horariosDisponiblesParaModal = ref([]);
@@ -182,7 +181,7 @@ const intentoAsignar = ref(false);
 
 const abrirModalAsignarHorario = (grupoMateria) => {
   grupoMateriaSeleccionado.value = grupoMateria;
-  formulario.horario_id = '';
+  formulario.horario_ids = [];
   Object.keys(errores).forEach(key => delete errores[key]);
   mostrarModal.value = true;
   erroresAsignacion.value = null;
@@ -232,18 +231,20 @@ const asignarHorario = async () => {
   Object.keys(errores).forEach(key => delete errores[key]);
 
   try {
-    // Construir arreglo de horario_ids: mantener los existentes y añadir el nuevo (si no vacío)
+    // Construir arreglo de horario_ids: mantener existentes + agregar los nuevos seleccionados
     intentoAsignar.value = true;
-    const existentes = (grupoMateriaSeleccionado.value.horarios || []).map(h => h.id);
-    const nuevo = formulario.horario_id ? parseInt(formulario.horario_id) : null;
-    const horario_ids = existentes.slice();
-    if (!nuevo) {
-      // No seleccionó nuevo horario
-      erroresAsignacion.value = 'Selecciona un horario antes de continuar.';
+    
+    if (formulario.horario_ids.length === 0) {
+      erroresAsignacion.value = 'Por favor, selecciona al menos un horario.';
       cargando.value = false;
       return;
     }
-    if (nuevo && !horario_ids.includes(nuevo)) horario_ids.push(nuevo);
+
+    const existentes = (grupoMateriaSeleccionado.value.horarios || []).map(h => h.id);
+    const nuevos = formulario.horario_ids.map(id => parseInt(id));
+    
+    // Combinar existentes + nuevos, manteniendo solo únicos
+    const horario_ids = [...new Set([...existentes, ...nuevos])];
 
     // Hacer PUT con respuesta JSON para capturar errores 422
     const response = await fetch(`/grupo-materias/${grupoMateriaSeleccionado.value.id}`, {
@@ -251,7 +252,7 @@ const asignarHorario = async () => {
       headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
       },
       body: JSON.stringify({ horario_ids }),
     });
