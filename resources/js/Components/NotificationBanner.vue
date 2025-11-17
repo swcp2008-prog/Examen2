@@ -23,10 +23,10 @@ watchEffect(() => {
     messageType.value = flash.bannerStyle === 'danger' ? 'danger' : 'success';
     show.value = true;
 
-    // Auto-dismiss after 5 seconds
+    // Auto-dismiss after 8 seconds (increased from 5s for better visibility)
     const timer = setTimeout(() => {
       show.value = false;
-    }, 5000);
+    }, 8000);
     return () => clearTimeout(timer);
   }
 });

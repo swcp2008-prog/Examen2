@@ -49,7 +49,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button @click="abrirModalAsignarHorario(grupoMateria)" class="text-blue-600 hover:text-blue-900">➕ Añadir Horario</button>
-                      <Link :href="`/grupo-materias/${grupoMateria.id}/edit`" class="text-indigo-600 hover:text-indigo-900">✏️ Editar</Link>
+                      <button @click="abrirModalReducirHorario(grupoMateria)" class="text-yellow-600 hover:text-yellow-900">➖ Reducir Horario</button>
                       <button @click="confirmarEliminar(grupoMateria)" class="text-red-600 hover:text-red-900">🗑️ Eliminar</button>
                     </td>
                   </tr>
@@ -86,29 +86,40 @@
                 <div class="sm:flex sm:items-start">
                   <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <h3 class="text-lg leading-6 font-medium text-gray-900">
-                      🕐 Asignar Horario a {{ grupoMateriaSeleccionado?.grupo?.nombre }} - {{ grupoMateriaSeleccionado?.materia?.nombre }}
+                      <template v-if="modalMode === 'add'">🕐 Asignar Horario a {{ grupoMateriaSeleccionado?.grupo?.nombre }} - {{ grupoMateriaSeleccionado?.materia?.nombre }}</template>
+                      <template v-else>➖ Reducir Horario de {{ grupoMateriaSeleccionado?.grupo?.nombre }} - {{ grupoMateriaSeleccionado?.materia?.nombre }}</template>
                     </h3>
                     <div class="mt-4">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Selecciona uno o más horarios:
-                      </label>
-                      <div v-if="cargandoHorarios" class="text-gray-600 text-sm italic py-2">
-                        Cargando horarios disponibles...
-                      </div>
-                      <select v-model="formulario.horario_ids" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" multiple>
-                        <optgroup label="✅ Disponibles">
-                          <option v-for="h in horariosDisponiblesParaModal.filter(h => h.disponible)" :key="h.id" :value="`${h.id}`">
-                            {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} (Aula: {{ h.aula?.nombre_aula || 'N/A' }})
-                          </option>
-                        </optgroup>
-                        <optgroup label="🔒 No disponibles">
-                          <option v-for="h in horariosDisponiblesParaModal.filter(h => !h.disponible)" :key="h.id" :value="`${h.id}`" disabled>
-                            {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} - {{ h.razon }}
-                          </option>
-                        </optgroup>
-                      </select>
+                      <template v-if="modalMode === 'add'">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona uno o más horarios:</label>
+                        <div v-if="cargandoHorarios" class="text-gray-600 text-sm italic py-2">Cargando horarios disponibles...</div>
+                        <select v-model="formulario.horario_ids" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" multiple>
+                          <optgroup label="✅ Disponibles">
+                            <option v-for="h in horariosDisponiblesParaModal.filter(h => h.disponible)" :key="h.id" :value="`${h.id}`">
+                              {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} (Aula: {{ h.aula?.nombre_aula || 'N/A' }})
+                            </option>
+                          </optgroup>
+                          <optgroup label="🔒 No disponibles">
+                            <option v-for="h in horariosDisponiblesParaModal.filter(h => !h.disponible)" :key="h.id" :value="`${h.id}`" disabled>
+                              {{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} - {{ h.razon }}
+                            </option>
+                          </optgroup>
+                        </select>
+                      </template>
+
+                      <template v-else>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona los horarios que deseas quitar:</label>
+                        <div v-if="!grupoMateriaSeleccionado?.horarios || grupoMateriaSeleccionado.horarios.length === 0" class="text-sm text-gray-600 italic">No hay horarios asignados.</div>
+                        <div v-else class="space-y-2">
+                          <div v-for="h in grupoMateriaSeleccionado.horarios" :key="h.id" class="flex items-center">
+                            <input type="checkbox" :id="`rem-${h.id}`" :value="h.id" v-model="removerIds" class="mr-2" />
+                            <label :for="`rem-${h.id}`" class="text-sm text-gray-700">{{ h.dia_semana }} {{ h.hora_inicio }}-{{ h.hora_fin }} ({{ h.aula?.nombre_aula || 'N/A' }})</label>
+                          </div>
+                        </div>
+                      </template>
+
                       <!-- Mostrar horarios ya asignados a este grupoMateria -->
-                      <div v-if="grupoMateriaSeleccionado?.horarios?.length > 0" class="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200">
+                      <div v-if="modalMode === 'add' && grupoMateriaSeleccionado?.horarios?.length > 0" class="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200">
                         <p class="text-sm font-medium text-blue-900">Horarios asignados actualmente:</p>
                         <div class="mt-1 space-y-1">
                           <span v-for="h in grupoMateriaSeleccionado.horarios" :key="h.id" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-200 text-blue-800 mr-2 mt-1">
@@ -116,15 +127,11 @@
                           </span>
                         </div>
                       </div>
-                      <div v-if="errores.horario_id" class="text-red-600 text-sm mt-1">
-                        {{ errores.horario_id[0] }}
-                      </div>
-                      <div v-if="erroresAsignacion" class="text-red-600 text-sm mt-1">
-                        {{ erroresAsignacion }}
-                      </div>
-                      <div v-if="intentoAsignar && formulario.horario_ids.length === 0" class="text-red-600 text-sm mt-1">
-                        Por favor, selecciona al menos un horario.
-                      </div>
+
+                      <div v-if="errores.horario_id" class="text-red-600 text-sm mt-1">{{ errores.horario_id[0] }}</div>
+                      <div v-if="erroresAsignacion" class="text-red-600 text-sm mt-1">{{ erroresAsignacion }}</div>
+                      <div v-if="modalMode === 'add' && intentoAsignar && formulario.horario_ids.length === 0" class="text-red-600 text-sm mt-1">Por favor, selecciona al menos un horario.</div>
+                      <div v-if="modalMode === 'reduce' && intentoAsignar && removerIds.length === 0" class="text-red-600 text-sm mt-1">Por favor, selecciona al menos un horario para quitar.</div>
                     </div>
                   </div>
                 </div>
@@ -133,11 +140,11 @@
               <!-- Botones -->
               <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                       <button 
-                  @click="asignarHorario" 
+                  @click="modalMode === 'add' ? asignarHorario() : reducirHorario()" 
                   :disabled="cargando"
                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-gray-400"
                 >
-                  {{ cargando ? "Asignando..." : "➕ Añadir Horario" }}
+                  {{ cargando ? (modalMode === 'add' ? 'Asignando...' : 'Procesando...') : (modalMode === 'add' ? '➕ Añadir Horario' : '➖ Quitar horarios seleccionados') }}
                 </button>
                 <button 
                   @click="cerrarModal" 
@@ -169,10 +176,12 @@ const mostrarModal = ref(false);
 const grupoMateriaSeleccionado = ref(null);
 const cargando = ref(false);
 const errores = reactive({});
+const modalMode = ref('add'); // 'add' or 'reduce'
 
 const formulario = reactive({
   horario_ids: [],
 });
+const removerIds = ref([]);
 
 const horariosDisponiblesParaModal = ref([]);
 const cargandoHorarios = ref(false);
@@ -180,7 +189,8 @@ const erroresAsignacion = ref(null);
 const intentoAsignar = ref(false);
 
 const abrirModalAsignarHorario = (grupoMateria) => {
-  console.log('Opening modal for grupoMateria:', grupoMateria);
+  console.log('Opening modal for grupoMateria (add):', grupoMateria);
+  modalMode.value = 'add';
   grupoMateriaSeleccionado.value = grupoMateria;
   formulario.horario_ids = [];
   Object.keys(errores).forEach(key => delete errores[key]);
@@ -188,6 +198,17 @@ const abrirModalAsignarHorario = (grupoMateria) => {
   erroresAsignacion.value = null;
   intentoAsignar.value = false;
   cargarHorariosDisponibles(grupoMateria);
+};
+
+const abrirModalReducirHorario = (grupoMateria) => {
+  console.log('Opening modal for grupoMateria (reduce):', grupoMateria);
+  modalMode.value = 'reduce';
+  grupoMateriaSeleccionado.value = grupoMateria;
+  removerIds.value = [];
+  Object.keys(errores).forEach(key => delete errores[key]);
+  mostrarModal.value = true;
+  erroresAsignacion.value = null;
+  intentoAsignar.value = false;
 };
 
 const cerrarModal = () => {
@@ -274,26 +295,55 @@ const asignarHorario = async () => {
         cargando.value = false;
       }
     });
-
-    // Éxito — mostrar mensaje de éxito sin recargar
-    erroresAsignacion.value = null;
-    const successMsg = 'Grupo-Materia actualizado correctamente';
-    if (!page.props.jetstream) page.props.jetstream = {};
-    page.props.jetstream.flash = {
-      banner: successMsg,
-      bannerStyle: 'success',
-    };
-    
-    // Actualizar la fila en tiempo real
-    const index = gruposMaterias.data.findIndex(g => g.id === grupoMateriaSeleccionado.value.id);
-    if (index !== -1) {
-      gruposMaterias.data[index].horarios = data.horarios || [];
-    }
-    
-    cerrarModal();
-    cargando.value = false;
+    // Router.post will handle success/error via callbacks
+    return;
   } catch (error) {
     flashError('Error al asignar horario: ' + error.message);
+    cargando.value = false;
+  }
+};
+
+const reducirHorario = async () => {
+  cargando.value = true;
+  Object.keys(errores).forEach(key => delete errores[key]);
+
+  try {
+    intentoAsignar.value = true;
+    if (removerIds.value.length === 0) {
+      erroresAsignacion.value = 'Por favor, selecciona al menos un horario para quitar.';
+      cargando.value = false;
+      return;
+    }
+
+    const existentes = (grupoMateriaSeleccionado.value.horarios || []).map(h => h.id);
+    const quitar = removerIds.value.map(id => parseInt(id));
+    const horario_ids = existentes.filter(id => !quitar.includes(id));
+
+    const grupoId = grupoMateriaSeleccionado.value?.id;
+    if (!grupoId) {
+      erroresAsignacion.value = 'Error: No se pudo obtener el ID del grupo-materia';
+      cargando.value = false;
+      return;
+    }
+
+    const fallbackUrl = `/grupo-materias/${grupoId}/update-horarios`;
+    router.post(fallbackUrl, { horario_ids }, {
+      onSuccess: () => {
+        erroresAsignacion.value = null;
+        cerrarModal();
+        cargando.value = false;
+      },
+      onError: (errors) => {
+        const errorMsg = errors.error || errors.message || 'Error al reducir horarios';
+        erroresAsignacion.value = errorMsg;
+        flashError(errorMsg);
+        cargando.value = false;
+      }
+    });
+
+    return;
+  } catch (error) {
+    flashError('Error al reducir horarios: ' + error.message);
     cargando.value = false;
   }
 };

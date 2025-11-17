@@ -133,7 +133,7 @@ class GrupoMateriaController extends Controller
         BitacoraService::registrar('CREAR', 'grupo_materias', $grupoMateria->id, 'GrupoMateria creado');
 
         // Flash UI message
-        BitacoraService::flash('Grupo-Materia asignado correctamente', 'success');
+        BitacoraService::flash('✅ Grupo-Materia creado exitosamente', 'success');
 
         return redirect()->route('grupo-materias.index');
     }
@@ -254,7 +254,7 @@ class GrupoMateriaController extends Controller
         Log::info('GrupoMateria update successful', ['id' => $grupoMateria->id, 'now_count' => $count]);
 
         // Flash UI message
-        BitacoraService::flash('Grupo-Materia actualizado correctamente', 'success');
+        BitacoraService::flash('✅ Horarios actualizado exitosamente', 'success');
 
         if ($request->wantsJson()) {
             $grupoMateria->load('horarios.aula');
@@ -267,12 +267,46 @@ class GrupoMateriaController extends Controller
     /**
      * Fallback update endpoint that accepts POST and forwards to update().
      * Some clients/proxies block PUT; this wrapper allows updating via POST.
+     * Captures the flash from update() and passes it to Inertia.
      */
     public function updateViaPost(Request $request, GrupoMateria $grupoMateria)
     {
         // Tell the request it's a PUT so update() behaves the same
         $request->setMethod('PUT');
-        return $this->update($request, $grupoMateria);
+
+        // Call update() which performs all validations and sync
+        // It will call BitacoraService::flash() to set session flash
+        $updateResponse = $this->update($request, $grupoMateria);
+
+        // Check if update() returned an error response (e.g., validation failed)
+        if ($updateResponse instanceof \Illuminate\Http\Response || $updateResponse instanceof \Illuminate\Http\JsonResponse) {
+            // If it's a 4xx error, just return it
+            if ($updateResponse->getStatusCode() >= 400) {
+                return $updateResponse;
+            }
+        }
+
+        // If we get here, update() was successful.
+        // Now fetch fresh data and render the index page with the flash intact.
+        $gruposMaterias = GrupoMateria::with(['grupo', 'materia', 'horarios.aula'])
+            ->paginate(15);
+        $horarios = Horario::with('aula')->get();
+
+        // Recompute disponibilidad
+        if (\Schema::hasTable('grupo_materia_horario')) {
+            $horariosUsados = \DB::table('grupo_materia_horario')->pluck('horario_id')->toArray();
+        } else {
+            $horariosUsados = GrupoMateria::whereNotNull('horario_id')->pluck('horario_id')->toArray();
+        }
+        foreach ($horarios as $horario) {
+            $horario->disponible = !in_array($horario->id, $horariosUsados);
+        }
+
+        // Return Inertia page render; the session flash will be automatically included by Inertia
+        return Inertia::render('GrupoMaterias/Index', [
+            'gruposMaterias' => $gruposMaterias,
+            'horarios' => $horarios,
+        ]);
     }
 
     public function destroy(GrupoMateria $grupoMateria)
@@ -283,7 +317,7 @@ class GrupoMateriaController extends Controller
         
         $grupoMateria->delete();
 
-        BitacoraService::flash('Grupo-Materia eliminada', 'success');
+        BitacoraService::flash('✅ Grupo-Materia eliminado exitosamente', 'success');
 
         return redirect()->route('grupo-materias.index');
     }
