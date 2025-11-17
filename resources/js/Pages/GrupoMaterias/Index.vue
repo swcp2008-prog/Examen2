@@ -256,11 +256,11 @@ const asignarHorario = async () => {
       return;
     }
     
-    const url = `/grupo-materias/${grupoId}`;
-    console.log('Sending PUT request to:', url, 'with data:', horario_ids);
-    
-    let response = await fetch(url, {
-      method: 'PUT',
+    // Use POST fallback endpoint directly to avoid PUT being blocked by some proxies/servers
+    const fallbackUrl = `/grupo-materias/${grupoId}/update-horarios`;
+    console.log('Sending POST to fallback URL:', fallbackUrl, 'with data:', horario_ids);
+    const response = await fetch(fallbackUrl, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
@@ -269,32 +269,11 @@ const asignarHorario = async () => {
       body: JSON.stringify({ horario_ids }),
     });
 
-    let data;
+    let data = {};
     try {
       data = await response.json();
     } catch (e) {
-      data = {};
-    }
-
-    // If server responds that PUT is not allowed, try fallback POST route
-    if (response.status === 405 || (data?.message && data.message.includes('PUT method is not supported'))) {
-      console.warn('PUT not allowed, retrying with POST fallback');
-      const fallbackUrl = `/grupo-materias/${grupoId}/update-horarios`;
-      console.log('Sending POST fallback to:', fallbackUrl);
-      response = await fetch(fallbackUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-        },
-        body: JSON.stringify({ horario_ids }),
-      });
-      try {
-        data = await response.json();
-      } catch (e) {
-        data = {};
-      }
+      // ignore parse errors
     }
 
     if (!response.ok) {
