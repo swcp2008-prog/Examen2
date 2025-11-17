@@ -302,7 +302,7 @@ class GrupoMateriaController extends Controller
             $horario->disponible = !in_array($horario->id, $horariosUsados);
         }
 
-        // Return Inertia page render; the session flash will be automatically included by Inertia
+        // Return Inertia page render; the middleware HandleInertiaFlash will include the session flash
         return Inertia::render('GrupoMaterias/Index', [
             'gruposMaterias' => $gruposMaterias,
             'horarios' => $horarios,
