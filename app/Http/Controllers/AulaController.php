@@ -95,19 +95,40 @@ class AulaController extends Controller
     {
         $this->authorize('view', 'aulas');
         
-        $dia = $request->input('dia');
-        $horaInicio = $request->input('hora_inicio');
-        $horaFin = $request->input('hora_fin');
+        $dia_semana = $request->input('dia_semana');
+        $hora_inicio = $request->input('hora_inicio');
+        $capacidad_minima = $request->input('capacidad_minima', 0);
 
-        $aulasDisponibles = Aula::whereDoesntHave('horarios', function ($query) use ($dia, $horaInicio, $horaFin) {
-            $query->where('dia_semana', $dia)
-                ->where('estado', 'activo')
-                ->where(function ($q) use ($horaInicio, $horaFin) {
-                    $q->whereBetween('hora_inicio', [$horaInicio, $horaFin])
-                        ->orWhereBetween('hora_fin', [$horaInicio, $horaFin]);
-                });
-        })->where('estado', 'activa')
-        ->get();
+        // Base query: aulas activas
+        $query = Aula::where('estado', 'activa');
+
+        // Si hay capacidad mínima, filtrar
+        if ($capacidad_minima > 0) {
+            $query->where('capacidad', '>=', $capacidad_minima);
+        }
+
+        // Si hay día y hora, filtrar por disponibilidad
+        if ($dia_semana && $hora_inicio) {
+            // Convertir hora_inicio (formato HH:MM) a rango de 1 hora
+            $horaFin = date('H:i', strtotime($hora_inicio . ' +1 hour'));
+
+            // Excluir aulas que tienen horarios ocupados en ese día y horario
+            $query->whereDoesntHave('horarios', function ($subquery) use ($dia_semana, $hora_inicio, $horaFin) {
+                $subquery->where('dia_semana', $dia_semana)
+                    ->where(function ($q) use ($hora_inicio, $horaFin) {
+                        // Conflicto: hora_inicio < horaFin AND hora_fin > hora_inicio
+                        $q->where('hora_inicio', '<', $horaFin)
+                          ->where('hora_fin', '>', $hora_inicio);
+                    });
+            });
+        } elseif ($dia_semana) {
+            // Si solo hay día, excluir aulas con cualquier horario en ese día
+            $query->whereDoesntHave('horarios', function ($subquery) use ($dia_semana) {
+                $subquery->where('dia_semana', $dia_semana);
+            });
+        }
+
+        $aulasDisponibles = $query->get();
 
         return response()->json($aulasDisponibles);
     }

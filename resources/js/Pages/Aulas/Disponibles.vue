@@ -57,7 +57,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="aula in aulasDisponibles" :key="aula.id">
-                    <td class="px-6 py-4 text-sm font-medium">{{ aula.nombre }}</td>
+                    <td class="px-6 py-4 text-sm font-medium">{{ aula.nombre_aula }}</td>
                     <td class="px-6 py-4 text-sm">{{ aula.capacidad }} estudiantes</td>
                     <td class="px-6 py-4 text-sm">
                       <span class="px-2 py-1 bg-green-100 text-green-700 rounded">Disponible</span>
@@ -91,19 +91,28 @@ const filtros = reactive({
 });
 
 const consultar = async () => {
+  if (!filtros.dia_semana) {
+    alert('Por favor, selecciona un día');
+    return;
+  }
+  
   cargando.value = true;
   consultado.value = true;
   try {
     const params = new URLSearchParams();
-    if (filtros.dia_semana) params.append('dia_semana', filtros.dia_semana);
+    params.append('dia_semana', filtros.dia_semana);
     if (filtros.hora_inicio) params.append('hora_inicio', filtros.hora_inicio);
     if (filtros.capacidad_minima) params.append('capacidad_minima', filtros.capacidad_minima);
     
     const response = await fetch(`/aulas/disponibles?${params}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
     const data = await response.json();
     aulasDisponibles.value = data;
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching aulas:', error);
+    aulasDisponibles.value = [];
   } finally {
     cargando.value = false;
   }
