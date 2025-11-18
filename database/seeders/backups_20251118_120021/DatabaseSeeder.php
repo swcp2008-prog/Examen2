@@ -27,21 +27,6 @@ class DatabaseSeeder extends Seeder
             GrupoMateriaSeeder::class,
             DocenteSeeder::class,
             DocenteGrupoMateriaSeeder::class,
-                // Exported from current database
-                ExportedRolesSeeder::class,
-                ExportedPermisosSeeder::class,
-                ExportedRolPermisoSeeder::class,
-                ExportedUsersSeeder::class,
-                ExportedAulasSeeder::class,
-                ExportedHorariosSeeder::class,
-                ExportedMateriasSeeder::class,
-                ExportedGruposSeeder::class,
-                ExportedGrupoMateriasSeeder::class,
-                ExportedGrupoMateriaHorarioSeeder::class,
-                ExportedDocentesSeeder::class,
-                ExportedDocenteGrupoMateriasSeeder::class,
-                ExportedAsistenciasSeeder::class,
-                ExportedBitacorasSeeder::class,
         ]);
     }
 }

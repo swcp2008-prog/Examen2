@@ -110,27 +110,7 @@ const submit = () => {
                     </div>
                 </form>
 
-                <!-- Credenciales de prueba -->
-                <div class="mt-8 pt-6 border-t border-gray-200">
-                    <p class="text-xs text-gray-600 font-semibold mb-3">📝 Credenciales de Prueba:</p>
-                    <div class="bg-blue-50 p-3 rounded border border-blue-200 text-xs text-gray-700 space-y-2">
-                        <div>
-                            <p class="font-semibold">Admin:</p>
-                            <p>📧 admin@sistema.com</p>
-                            <p>🔑 password123</p>
-                        </div>
-                        <div class="pt-2 border-t border-blue-200">
-                            <p class="font-semibold">Coordinador:</p>
-                            <p>📧 coordinador@sistema.com</p>
-                            <p>🔑 password123</p>
-                        </div>
-                        <div class="pt-2 border-t border-blue-200">
-                            <p class="font-semibold">Docente:</p>
-                            <p>📧 carlos.garcia@sistema.com</p>
-                            <p>🔑 password123</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Credenciales de prueba removidas -->
             </div>
 
             <!-- Footer info -->

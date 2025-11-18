@@ -23,6 +23,9 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+// Ruta de diagnóstico temporal (no autenticada) para probar disponibilidad de aulas
+Route::get('/debug/aulas/disponibles', [\App\Http\Controllers\AulaController::class, 'debugDisponibles'])->name('debug.aulas.disponibles');
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -44,13 +47,14 @@ Route::middleware([
     Route::post('/bitacora/exportar', [BitacoraController::class, 'exportar'])->name('bitacora.exportar');
 
     // Rutas de Aulas (CU11)
-    Route::resource('aulas', AulaController::class);
+    // Rutas específicas primero para evitar que el resource capture nombres como 'disponibles'
     Route::get('/aulas-disponibles', function () {
         return Inertia::render('Aulas/Disponibles', [
             'aulas' => \App\Models\Aula::all(),
         ]);
     })->name('aulas.disponibles-page');
     Route::get('/aulas/disponibles', [AulaController::class, 'disponibles'])->name('aulas.disponibles');
+    Route::resource('aulas', AulaController::class);
 
     // Rutas de Horarios
     Route::resource('horarios', HorarioController::class);
@@ -94,6 +98,11 @@ Route::middleware([
         }
         return redirect()->route('docentes.horarios', ['docente' => $user->docente->id]);
     })->name('mi-horario');
+
+    // Ruta de perfil del docente con asistencia
+    Route::get('/mi-perfil', [DocenteController::class, 'perfil'])->name('docentes.perfil');
+    Route::post('/docentes/registrar-entrada', [DocenteController::class, 'registrarEntrada'])->name('docentes.registrar-entrada');
+    Route::post('/docentes/registrar-salida', [DocenteController::class, 'registrarSalida'])->name('docentes.registrar-salida');
 
     // Rutas de Asistencia (CU14, CU17)
     Route::resource('asistencias', AsistenciaController::class)->except('show');

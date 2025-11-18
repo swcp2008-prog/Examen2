@@ -40,6 +40,32 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- Paginación -->
+            <div class="mt-6 flex justify-between items-center">
+              <div class="text-sm text-gray-600">
+                Mostrando {{ horarios.from }} a {{ horarios.to }} de {{ horarios.total }} registros
+              </div>
+              <div class="flex gap-2">
+                <Link 
+                  v-if="horarios.prev_page_url"
+                  :href="horarios.prev_page_url"
+                  class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  Anterior
+                </Link>
+                <span class="px-4 py-2 text-gray-700">
+                  Página {{ horarios.current_page }} de {{ horarios.last_page }}
+                </span>
+                <Link 
+                  v-if="horarios.next_page_url"
+                  :href="horarios.next_page_url"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                >
+                  Siguiente
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

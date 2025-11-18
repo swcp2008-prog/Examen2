@@ -15,6 +15,7 @@
               <Link v-if="user?.can_view_grupos" href="/grupos" class="text-gray-700 hover:text-gray-900">Grupos</Link>
               <Link v-if="user?.can_view_asistencias" href="/asistencias" class="text-gray-700 hover:text-gray-900">Asistencia</Link>
               <Link v-if="isDocente" href="/mi-horario" class="text-gray-700 hover:text-gray-900">Mi horario</Link>
+              <Link v-if="isDocente" href="/mi-perfil" class="text-gray-700 hover:text-gray-900">📝 Mi Asistencia</Link>
               <Link v-if="user?.can_view_bitacora" href="/bitacora" class="text-gray-700 hover:text-gray-900">Bitácora</Link>
             </div>
           </div>
